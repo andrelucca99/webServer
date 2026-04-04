@@ -48,6 +48,14 @@ Sem o parser, não há como implementar GET (o que o cliente quer?), nem POST (q
 - **RFC 7230 (seções 3.1 e 3.2)**
   - Não precisa ler tudo. Leia as seções sobre request-line e header fields.
 
+
+Resumo do que aprendi:
+O http/1.1 é a evolução do http/1.0, sendo uma das principais diferenças ele nao fechar a porta de requição permitindo o connect que antes não era possivel.
+o protocolo considste em metodos, que são se não me engano 7, sendo os principais e necessários no projeto, GET, HEAD, POST, DELETE, OPTIONS, PUT
+
+é composto por header, body e o encerramento com \r\n, \r\n também deve ser utilizado para separar o header do body
+
+a linha de header é constituida  pela request line que sempre inicia com o metodo, o que oque/onde vai ser manipulado e a versão do http, sendo também obrigatório o host logo abaixo e pros metodos que precisam o body pode ser adicionado, mas não é obrigatório, tendo o comportamento definido de acordo
 ---
 
 ### Parte 2 — Como o texto chega ao servidor (interface com a Pessoa A)

@@ -16,17 +16,17 @@
 #include "Config.hpp"
 
 class ConfigParser {
-private:
-    std::vector<std::string> tokens;
-    size_t pos;
+    private:
+        std::vector<std::string> tokens;
+        size_t pos;
 
-    std::string current();
-    void advance();
-    void expect(const std::string& token);
+        std::string current();
+        void advance();
+        void expect(const std::string& token);
 
-    ServerConfig parseServer();
-    RouteConfig parseRoute();
+        ServerConfig parseServer();
+        RouteConfig parseRoute();
 
-public:
-    Config parse(const std::string& filename);
+    public:
+        Config parse(const std::string& filename);
 };
