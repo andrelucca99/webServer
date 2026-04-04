@@ -1,0 +1,5 @@
+*.pdf
+*.md
+.claude
+!README.md
+!*_roadmap.md
