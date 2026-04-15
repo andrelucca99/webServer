@@ -29,4 +29,5 @@ class HttpResponse {
 		~HttpResponse();
 
 		static std::string reasonPhraseFor(int code);
+		static std::string mimeTypeFor(const std::string& extension);
 };

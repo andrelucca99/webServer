@@ -53,3 +53,17 @@ std::string HttpResponse::reasonPhraseFor(int code) {
 		default:  return "Unknown";
 	}
 }
+
+std::string HttpResponse::mimeTypeFor(const std::string& extension) {
+	if (extension == ".html") return "text/html";
+	if (extension == ".css")  return "text/css";
+	if (extension == ".js")   return "application/javascript";
+	if (extension == ".json") return "application/json";
+	if (extension == ".png")  return "image/png";
+	if (extension == ".jpg")  return "image/jpeg";
+	if (extension == ".jpeg") return "image/jpeg";
+	if (extension == ".gif")  return "image/gif";
+	if (extension == ".ico")  return "image/x-icon";
+	if (extension == ".txt")  return "text/plain";
+	return "application/octet-stream";
+}
