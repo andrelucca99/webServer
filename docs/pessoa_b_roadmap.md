@@ -2,6 +2,21 @@
 
 ---
 
+## Visão geral das entregas
+
+| Entrega | Status |
+|---------|--------|
+| HttpRequestParser | ✅ completo |
+| HttpResponse | 🔄 em andamento |
+| GET — servir arquivos estáticos | ❌ |
+| POST — receber dados | ❌ |
+| DELETE | ❌ |
+| Autoindex (listagem de diretório) | ❌ |
+| Upload (`multipart/form-data`) | ❌ |
+| CGI | ❌ |
+
+---
+
 ## O que já está pronto (feito pela Pessoa A)
 
 O projeto tem uma **camada de configuração completa e funcional**:
