@@ -27,4 +27,6 @@ class HttpResponse {
 		HttpResponse(const HttpResponse& other);
 		HttpResponse& operator=(const HttpResponse& other);
 		~HttpResponse();
+
+		static std::string reasonPhraseFor(int code);
 };

@@ -13,7 +13,7 @@
 #include "../includes/HttpResponse.hpp"
 
 HttpResponse::HttpResponse()
-	: _http_version("HTTP/1.1"), _status_code(200), _reason_phrase("OK") {}
+	: _http_version("HTTP/1.1"), _status_code(200), _reason_phrase(reasonPhraseFor(200)) {}
 
 HttpResponse::HttpResponse(const HttpResponse& other)
 	: _http_version(other._http_version),
@@ -34,3 +34,22 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& other) {
 }
 
 HttpResponse::~HttpResponse() {}
+
+// --- Helpers estaticos ---
+
+std::string HttpResponse::reasonPhraseFor(int code) {
+	switch (code) {
+		case 200: return "OK";
+		case 201: return "Created";
+		case 204: return "No Content";
+		case 301: return "Moved Permanently";
+		case 400: return "Bad Request";
+		case 403: return "Forbidden";
+		case 404: return "Not Found";
+		case 405: return "Method Not Allowed";
+		case 413: return "Payload Too Large";
+		case 500: return "Internal Server Error";
+		case 505: return "HTTP Version Not Supported";
+		default:  return "Unknown";
+	}
+}
