@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../includes/HttpResponse.hpp"
+#include <sstream>
 
 HttpResponse::HttpResponse()
 	: _http_version("HTTP/1.1"), _status_code(200), _reason_phrase(reasonPhraseFor(200)) {}
@@ -34,6 +35,19 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& other) {
 }
 
 HttpResponse::~HttpResponse() {}
+
+// --- Setters ---
+
+void HttpResponse::setHeader(const std::string& key, const std::string& value) {
+	_headers[key] = value;
+}
+
+void HttpResponse::setBody(const std::string& content) {
+	_body = content;
+	std::ostringstream oss;
+	oss << _body.size();
+	setHeader("Content-Length", oss.str());
+}
 
 // --- Helpers estaticos ---
 
