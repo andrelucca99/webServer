@@ -10,11 +10,14 @@ INCLUDES    = -I src/includes
 
 SRC_DIR     = src
 CONFIG_DIR  = $(SRC_DIR)/config
+SERVER_DIR = $(SRC_DIR)/server
 
 SRCS        = \
 	$(SRC_DIR)/main.cpp \
 	$(CONFIG_DIR)/Tokenizer.cpp \
-	$(CONFIG_DIR)/ConfigParser.cpp
+	$(CONFIG_DIR)/ConfigParser.cpp \
+	$(SERVER_DIR)/Server.cpp \
+	$(SERVER_DIR)/Socket.cpp
 
 OBJS        = $(SRCS:.cpp=.o)
 
