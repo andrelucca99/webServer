@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jtertuli <jtertuli@student.42sp.org.br>     +#+  +:+       +#+       */
+/*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 12:00:00 by jtertuli          #+#    #+#             */
-/*   Updated: 2026/04/10 12:00:00 by jtertuli         ###   ########.fr       */
+/*   Updated: 2026/04/17 16:58:13 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,4 +30,10 @@ class HttpResponse {
 
 		static std::string reasonPhraseFor(int code);
 		static std::string mimeTypeFor(const std::string& extension);
+
+		int status;
+    std::string body;
+    std::string contentType;
+
+		std::string build() const;
 };

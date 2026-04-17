@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jtertuli <jtertuli@student.42sp.org.br>     +#+  +:+       +#+       */
+/*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 12:00:00 by jtertuli          #+#    #+#             */
-/*   Updated: 2026/04/10 12:00:00 by jtertuli         ###   ########.fr       */
+/*   Updated: 2026/04/17 17:25:55 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/HttpResponse.hpp"
+#include <sstream>
 
 HttpResponse::HttpResponse()
 	: _http_version("HTTP/1.1"), _status_code(200), _reason_phrase(reasonPhraseFor(200)) {}
@@ -66,4 +67,16 @@ std::string HttpResponse::mimeTypeFor(const std::string& extension) {
 	if (extension == ".ico")  return "image/x-icon";
 	if (extension == ".txt")  return "text/plain";
 	return "application/octet-stream";
+}
+
+std::string HttpResponse::build() const {
+	std::stringstream response;
+
+	response << "HTTP/1.1 " << status << " OK\r\n";
+	response << "Content-Type: " << contentType << "\r\n";
+	response << "Content-Length: " << body.size() << "\r\n";
+	response << "\r\n";
+	response << body;
+
+	return response.str();
 }
