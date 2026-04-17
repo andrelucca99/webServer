@@ -1,32 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/01 19:04:04 by andre             #+#    #+#             */
-/*   Updated: 2026/04/15 19:23:35 by andre            ###   ########.fr       */
+/*   Created: 2026/04/15 19:11:27 by andre             #+#    #+#             */
+/*   Updated: 2026/04/15 19:13:27 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "./includes/Server.hpp"
-#include "./includes/ConfigParser.hpp"
-#include <iostream>
+#pragma once
 
-int main() {
-    ConfigParser parser;
+#include "Socket.hpp"
+#include "ServerConfig.hpp"
 
-    Config config = parser.parse("config.conf");
+class Server {
+public:
+    Server(const ServerConfig& config);
+    void run();
 
-    if (config.servers.empty()) {
-        std::cerr << "Nenhum server encontrado no config\n";
-        return 1;
-    }
-
-    // pega o primeiro server
-    Server server(config.servers[0]);
-    server.run();
-
-    return 0;
-}
+private:
+    ServerConfig _config;
+    Socket _socket;
+};
