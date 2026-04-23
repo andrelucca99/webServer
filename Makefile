@@ -25,6 +25,18 @@ SRCS        = \
 OBJS        = $(SRCS:.cpp=.o)
 
 # ==========================
+# TEST PARSER
+# ==========================
+TEST_NAME   = test_parser
+
+TEST_SRCS   = \
+	$(HTTP_DIR)/test_parser.cpp \
+	$(HTTP_DIR)/HttpRequestParser.cpp \
+	$(HTTP_DIR)/HttpResponse.cpp
+
+TEST_OBJS   = $(TEST_SRCS:.cpp=.o)
+
+# ==========================
 # RULES
 # ==========================
 
@@ -33,14 +45,17 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
+$(TEST_NAME): $(TEST_OBJS)
+	$(CXX) $(CXXFLAGS) $(TEST_OBJS) -o $(TEST_NAME)
+
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(TEST_OBJS)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(TEST_NAME)
 
 re: fclean all
 
