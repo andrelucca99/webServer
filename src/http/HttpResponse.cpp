@@ -54,6 +54,20 @@ void HttpResponse::setBody(const std::string& content) {
 	setHeader("Content-Length", oss.str());
 }
 
+std::string HttpResponse::toString() const {
+	std::ostringstream oss;
+
+	oss << _http_version << " " << _status_code << " " << _reason_phrase << "\r\n";
+
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
+		 it != _headers.end(); ++it)
+		oss << it->first << ": " << it->second << "\r\n";
+
+	oss << "\r\n" << _body;
+
+	return oss.str();
+}
+
 // --- Helpers estaticos ---
 
 std::string HttpResponse::reasonPhraseFor(int code) {
