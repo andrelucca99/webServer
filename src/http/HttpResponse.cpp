@@ -38,6 +38,11 @@ HttpResponse::~HttpResponse() {}
 
 // --- Setters ---
 
+void HttpResponse::setStatus(int code) {
+	_status_code   = code;
+	_reason_phrase = reasonPhraseFor(code);
+}
+
 void HttpResponse::setHeader(const std::string& key, const std::string& value) {
 	_headers[key] = value;
 }
