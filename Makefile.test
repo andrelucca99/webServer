@@ -1,24 +1,17 @@
 # ==========================
 # CONFIG
 # ==========================
-NAME        = webserv_test
+NAME        = test_parser
 
 CXX         = c++
 CXXFLAGS    = -Wall -Wextra -Werror -std=c++98
 
 INCLUDES    = -I src/includes
 
-SRC_DIR     = src
-CONFIG_DIR  = $(SRC_DIR)/config
-SERVER_DIR  = $(SRC_DIR)/server
-HTTP_DIR    = $(SRC_DIR)/http
+HTTP_DIR    = src/http
 
 SRCS        = \
-	$(SRC_DIR)/main.cpp \
-	$(CONFIG_DIR)/Tokenizer.cpp \
-	$(CONFIG_DIR)/ConfigParser.cpp \
-	$(SERVER_DIR)/Server.cpp \
-	$(SERVER_DIR)/Socket.cpp \
+	$(HTTP_DIR)/test_parser.cpp \
 	$(HTTP_DIR)/HttpRequestParser.cpp \
 	$(HTTP_DIR)/HttpResponse.cpp
 
