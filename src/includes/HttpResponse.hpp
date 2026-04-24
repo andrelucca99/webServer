@@ -28,6 +28,12 @@ class HttpResponse {
 		HttpResponse& operator=(const HttpResponse& other);
 		~HttpResponse();
 
+		void setStatus(int code);
+		void setHeader(const std::string& key, const std::string& value);
+		void setBody(const std::string& content);
+
+		std::string toString() const;
+
 		static std::string reasonPhraseFor(int code);
 		static std::string mimeTypeFor(const std::string& extension);
 

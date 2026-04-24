@@ -36,6 +36,38 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& other) {
 
 HttpResponse::~HttpResponse() {}
 
+// --- Setters ---
+
+void HttpResponse::setStatus(int code) {
+	_status_code   = code;
+	_reason_phrase = reasonPhraseFor(code);
+}
+
+void HttpResponse::setHeader(const std::string& key, const std::string& value) {
+	_headers[key] = value;
+}
+
+void HttpResponse::setBody(const std::string& content) {
+	_body = content;
+	std::ostringstream oss;
+	oss << _body.size();
+	setHeader("Content-Length", oss.str());
+}
+
+std::string HttpResponse::toString() const {
+	std::ostringstream oss;
+
+	oss << _http_version << " " << _status_code << " " << _reason_phrase << "\r\n";
+
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
+		 it != _headers.end(); ++it)
+		oss << it->first << ": " << it->second << "\r\n";
+
+	oss << "\r\n" << _body;
+
+	return oss.str();
+}
+
 // --- Helpers estaticos ---
 
 std::string HttpResponse::reasonPhraseFor(int code) {
