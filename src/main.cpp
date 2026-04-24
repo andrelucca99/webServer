@@ -6,27 +6,14 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/01 19:04:04 by andre             #+#    #+#             */
-/*   Updated: 2026/04/15 19:23:35 by andre            ###   ########.fr       */
+/*   Updated: 2026/04/18 11:51:56 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "./includes/Server.hpp"
-#include "./includes/ConfigParser.hpp"
-#include <iostream>
 
 int main() {
-    ConfigParser parser;
-
-    Config config = parser.parse("config.conf");
-
-    if (config.servers.empty()) {
-        std::cerr << "Nenhum server encontrado no config\n";
-        return 1;
-    }
-
-    // pega o primeiro server
-    Server server(config.servers[0]);
+    Server server;
     server.run();
-
     return 0;
 }

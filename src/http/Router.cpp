@@ -6,29 +6,33 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/17 17:01:45 by andre             #+#    #+#             */
-/*   Updated: 2026/04/17 17:02:43 by andre            ###   ########.fr       */
+/*   Updated: 2026/04/24 17:07:47 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Router.hpp"
+#include "../includes/File.hpp"
 
-HttpResponse Router::handleRequest(const HttpRequest& request) {
+HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfig& config) {
   HttpResponse res;
 
-  if (request.path == "/") {
+  std::string path = request.path;
+
+  if (path == "/")
+    path = "/index.html";
+
+  std::string fullPath = config.root + path;
+
+  std::string content = readFile(fullPath);
+
+  if (!content.empty()) {
     res.status = 200;
-    res.body = "Bem-vindo ao Webserv!";
-    res.contentType = "text/plain";
-  }
-  else if (request.path == "/about") {
-    res.status = 200;
-    res.body = "Pagina About";
-    res.contentType = "text/plain";
-  }
-  else {
+    res.body = content;
+    res.contentType = "text/html";
+  } else {
     res.status = 404;
-    res.body = "404 Not Found";
-    res.contentType = "text/plain";
+    res.body = "<h1>404 Not Found</h1>";
+    res.contentType = "text/html";
   }
 
   return res;

@@ -12,6 +12,7 @@ SRC_DIR     = src
 CONFIG_DIR  = $(SRC_DIR)/config
 SERVER_DIR = $(SRC_DIR)/server
 HTTP_DIR = $(SRC_DIR)/http
+UTILS_DIR = $(SRC_DIR)/utils
 
 SRCS        = \
 	$(SRC_DIR)/main.cpp \
@@ -23,6 +24,7 @@ SRCS        = \
 	$(HTTP_DIR)/HttpRequestParser.cpp \
 	$(HTTP_DIR)/HttpResponse.cpp \
 	$(HTTP_DIR)/HttpRequest.cpp \
+	$(UTILS_DIR)/File.cpp \
 
 OBJS        = $(SRCS:.cpp=.o)
 
