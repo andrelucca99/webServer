@@ -1,19 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   File.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/01 19:04:04 by andre             #+#    #+#             */
-/*   Updated: 2026/04/18 11:51:56 by andre            ###   ########.fr       */
+/*   Created: 2026/04/18 11:20:12 by andre             #+#    #+#             */
+/*   Updated: 2026/04/18 11:20:43 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "./includes/Server.hpp"
+#include <fstream>
+#include <sstream>
 
-int main() {
-    Server server;
-    server.run();
-    return 0;
+std::string readFile(const std::string& path) {
+    std::ifstream file(path.c_str());
+    if (!file.is_open())
+        return "";
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
 }

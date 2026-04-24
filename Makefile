@@ -10,8 +10,9 @@ INCLUDES    = -I src/includes
 
 SRC_DIR     = src
 CONFIG_DIR  = $(SRC_DIR)/config
-SERVER_DIR  = $(SRC_DIR)/server
-HTTP_DIR    = $(SRC_DIR)/http
+SERVER_DIR = $(SRC_DIR)/server
+HTTP_DIR = $(SRC_DIR)/http
+UTILS_DIR = $(SRC_DIR)/utils
 
 SRCS        = \
 	$(SRC_DIR)/main.cpp \
@@ -19,8 +20,11 @@ SRCS        = \
 	$(CONFIG_DIR)/ConfigParser.cpp \
 	$(SERVER_DIR)/Server.cpp \
 	$(SERVER_DIR)/Socket.cpp \
+	$(HTTP_DIR)/Router.cpp \
 	$(HTTP_DIR)/HttpRequestParser.cpp \
-	$(HTTP_DIR)/HttpResponse.cpp
+	$(HTTP_DIR)/HttpResponse.cpp \
+	$(HTTP_DIR)/HttpRequest.cpp \
+	$(UTILS_DIR)/File.cpp \
 
 OBJS        = $(SRCS:.cpp=.o)
 

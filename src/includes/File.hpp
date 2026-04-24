@@ -1,19 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   File.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/01 19:04:04 by andre             #+#    #+#             */
-/*   Updated: 2026/04/18 11:51:56 by andre            ###   ########.fr       */
+/*   Created: 2026/04/18 11:21:06 by andre             #+#    #+#             */
+/*   Updated: 2026/04/18 11:21:26 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "./includes/Server.hpp"
+#pragma once
+#include <string>
 
-int main() {
-    Server server;
-    server.run();
-    return 0;
-}
+std::string readFile(const std::string& path);
