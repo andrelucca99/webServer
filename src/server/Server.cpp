@@ -6,11 +6,12 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 19:12:34 by andre             #+#    #+#             */
-/*   Updated: 2026/04/24 17:07:25 by andre            ###   ########.fr       */
+/*   Updated: 2026/04/25 10:14:32 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
+#include "../includes/Router.hpp"
 #include "../includes/HttpRequest.hpp"
 #include "../includes/HttpRequestParser.hpp"
 
@@ -25,16 +26,6 @@
 
 #define PORT 8080
 #define BUFFER_SIZE 4096
-
-static std::string getContentType(const std::string &path) {
-    if (path.find(".html") != std::string::npos) return "text/html";
-    if (path.find(".css") != std::string::npos) return "text/css";
-    if (path.find(".js") != std::string::npos) return "application/javascript";
-    if (path.find(".png") != std::string::npos) return "image/png";
-    if (path.find(".jpg") != std::string::npos) return "image/jpeg";
-    if (path.find(".ico") != std::string::npos) return "image/x-icon";
-    return "text/plain";
-}
 
 static std::string buildResponse(int status, const std::string &body, const std::string &contentType) {
     std::stringstream response;
@@ -52,29 +43,7 @@ static std::string buildResponse(int status, const std::string &body, const std:
     return response.str();
 }
 
-static bool readFile(const std::string &path, std::string &out) {
-    std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
-    if (!file.is_open())
-        return false;
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    out = buffer.str();
-    return true;
-}
-
-static std::string resolvePath(const std::string &urlPath) {
-    std::string path = "./www" + urlPath;
-
-    if (urlPath == "/")
-        path = "./www/index.html";
-    else if (path[path.length() - 1] == '/')
-        path += "index.html";
-
-    return path;
-}
-
-Server::Server() {}
+Server::Server(const ServerConfig& config) : config(config) {}
 Server::~Server() {}
 
 void Server::run() {
@@ -120,26 +89,22 @@ void Server::run() {
         HttpRequestParser parser;
         HttpRequest request = parser.parse(rawRequest);
 
+        // opcional: validar método
         if (request.method != "GET") {
-            std::string response = buildResponse(404, "<h1>404 Not Found</h1>", "text/html");
+            std::string response = buildResponse(405, "<h1>Method Not Allowed</h1>", "text/html");
             send(client_socket, response.c_str(), response.size(), 0);
             close(client_socket);
             continue;
         }
 
-        std::string path = resolvePath(request.path);
+        // router
+        HttpResponse response = Router::handleRequest(request, config);
 
-        std::string body;
-        if (!readFile(path, body)) {
-            std::string response = buildResponse(404, "<h1>404 Not Found</h1>", "text/html");
-            send(client_socket, response.c_str(), response.size(), 0);
-            close(client_socket);
-            continue;
-        }
+        // build da resposta
+        std::string responseStr = response.build();
 
-        std::string response = buildResponse(200, body, getContentType(path));
-
-        send(client_socket, response.c_str(), response.size(), 0);
+        // envio
+        send(client_socket, responseStr.c_str(), responseStr.size(), 0);
         close(client_socket);
     }
 }
