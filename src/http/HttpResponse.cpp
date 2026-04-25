@@ -6,7 +6,7 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 12:00:00 by jtertuli          #+#    #+#             */
-/*   Updated: 2026/04/17 17:25:55 by andre            ###   ########.fr       */
+/*   Updated: 2026/04/25 09:43:15 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,7 @@ std::string HttpResponse::mimeTypeFor(const std::string& extension) {
 std::string HttpResponse::build() const {
 	std::stringstream response;
 
-	response << "HTTP/1.1 " << status << " OK\r\n";
+	response << "HTTP/1.1 " << status << " " << reasonPhraseFor(status) << "\r\n";
 	response << "Content-Type: " << contentType << "\r\n";
 	response << "Content-Length: " << body.size() << "\r\n";
 	response << "\r\n";
