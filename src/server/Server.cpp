@@ -24,24 +24,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#define PORT 8080
 #define BUFFER_SIZE 4096
-
-static std::string buildResponse(int status, const std::string &body, const std::string &contentType) {
-    std::stringstream response;
-
-    if (status == 200)
-        response << "HTTP/1.1 200 OK\r\n";
-    else
-        response << "HTTP/1.1 404 Not Found\r\n";
-
-    response << "Content-Type: " << contentType << "\r\n";
-    response << "Content-Length: " << body.size() << "\r\n";
-    response << "Connection: close\r\n\r\n";
-    response << body;
-
-    return response.str();
-}
 
 Server::Server(const ServerConfig& config) : config(config) {}
 Server::~Server() {}
@@ -59,9 +42,13 @@ void Server::run() {
         return;
     }
 
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    int port = config.port != 0 ? config.port : 8080;
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    address.sin_addr.s_addr = config.host.empty() ? INADDR_ANY : inet_addr(config.host.c_str());
+    address.sin_port = htons(port);
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
@@ -73,7 +60,7 @@ void Server::run() {
         return;
     }
 
-    std::cout << "Servidor rodando na porta " << PORT << "...\n";
+    std::cout << "Servidor rodando na porta " << port << "...\n";
 
     while (true) {
         client_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
@@ -89,21 +76,10 @@ void Server::run() {
         HttpRequestParser parser;
         HttpRequest request = parser.parse(rawRequest);
 
-        // opcional: validar método
-        if (request.method != "GET" && request.method != "POST") {
-            std::string response = buildResponse(405, "<h1>Method Not Allowed</h1>", "text/html");
-            send(client_socket, response.c_str(), response.size(), 0);
-            close(client_socket);
-            continue;
-        }
-
-        // router
         HttpResponse response = Router::handleRequest(request, config);
 
-        // build da resposta
         std::string responseStr = response.build();
 
-        // envio
         send(client_socket, responseStr.c_str(), responseStr.size(), 0);
         close(client_socket);
     }

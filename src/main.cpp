@@ -11,11 +11,26 @@
 /* ************************************************************************** */
 
 #include "./includes/Server.hpp"
+#include "./includes/ConfigParser.hpp"
+#include <iostream>
 
 int main() {
-    ServerConfig config;
-    config.root = "./www";
+    ConfigParser parser;
+    Config config;
 
-    Server server(config);
+    try {
+        config = parser.parse("config.conf");
+    } catch (const std::exception& e) {
+        std::cerr << "Config error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    if (config.servers.empty()) {
+        std::cerr << "No server block found in config.conf" << std::endl;
+        return 1;
+    }
+
+    Server server(config.servers[0]);
     server.run();
+    return 0;
 }
