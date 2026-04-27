@@ -6,7 +6,7 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 19:12:34 by andre             #+#    #+#             */
-/*   Updated: 2026/04/25 10:14:32 by andre            ###   ########.fr       */
+/*   Updated: 2026/04/27 06:00:12 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ void Server::run() {
         HttpRequest request = parser.parse(rawRequest);
 
         // opcional: validar método
-        if (request.method != "GET") {
+        if (request.method != "GET" && request.method != "POST") {
             std::string response = buildResponse(405, "<h1>Method Not Allowed</h1>", "text/html");
             send(client_socket, response.c_str(), response.size(), 0);
             close(client_socket);
