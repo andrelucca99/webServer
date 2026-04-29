@@ -16,6 +16,22 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <map>
+
+static std::string errorBody(int status, const ServerConfig& config) {
+    std::map<int, std::string>::const_iterator it = config.error_pages.find(status);
+    if (it != config.error_pages.end()) {
+        std::string ep = it->second;
+        std::string path = config.root;
+        if (!path.empty() && path[path.size() - 1] != '/') path += "/";
+        if (!ep.empty() && ep[0] == '/') ep.erase(0, 1);
+        std::string content = readFile(path + ep);
+        if (!content.empty()) return content;
+    }
+    std::ostringstream oss;
+    oss << "<h1>" << status << " " << HttpResponse::reasonPhraseFor(status) << "</h1>";
+    return oss.str();
+}
 
 static std::string urlDecode(const std::string& str) {
     std::string result;
@@ -66,14 +82,16 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
     if (route && !isMethodAllowed(*route, request.method)) {
         res.status = 405;
-        res.body = "<h1>405 Method Not Allowed</h1>";
+        res.body = errorBody(405, config);
         res.contentType = "text/html";
         return res;
     }
 
-    if (path == "/" || path.empty()) {
-        std::string index = (route && !route->index.empty()) ? route->index : "index.html";
-        path = "/" + index;
+    if (config.client_max_body_size > 0 && request.body.size() > config.client_max_body_size) {
+        res.status = 413;
+        res.body = errorBody(413, config);
+        res.contentType = "text/html";
+        return res;
     }
 
     if (!path.empty() && path[0] == '/')
@@ -81,7 +99,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
     if (path.find("..") != std::string::npos) {
         res.status = 403;
-        res.body = "<h1>403 Forbidden</h1>";
+        res.body = errorBody(403, config);
         res.contentType = "text/html";
         return res;
     }
@@ -89,7 +107,8 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
     std::string fullPath = config.root;
     if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
         fullPath += "/";
-    fullPath += path;
+    if (!path.empty())
+        fullPath += path;
 
     if (request.method == "DELETE") {
         if (std::remove(fullPath.c_str()) == 0) {
@@ -97,7 +116,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             res.body = "";
         } else {
             res.status = 404;
-            res.body = "<h1>404 Not Found</h1>";
+            res.body = errorBody(404, config);
         }
         res.contentType = "text/html";
         return res;
@@ -109,7 +128,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             res.body = "<h1>201 Created</h1>";
         } else {
             res.status = 500;
-            res.body = "<h1>500 Internal Server Error</h1>";
+            res.body = errorBody(500, config);
         }
         res.contentType = "text/html";
         return res;
@@ -125,14 +144,14 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             res.contentType = HttpResponse::mimeTypeFor(ext);
         } else {
             res.status = 404;
-            res.body = "<h1>404 Not Found</h1>";
+            res.body = errorBody(404, config);
             res.contentType = "text/html";
         }
         return res;
     }
 
     res.status = 405;
-    res.body = "<h1>405 Method Not Allowed</h1>";
+    res.body = errorBody(405, config);
     res.contentType = "text/html";
     return res;
 }

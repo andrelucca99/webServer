@@ -18,6 +18,16 @@
 #include <iostream>
 #include <cstdlib>
 
+static size_t parseSize(const std::string& s) {
+    size_t val = static_cast<size_t>(atoi(s.c_str()));
+    if (!s.empty()) {
+        char last = s[s.size() - 1];
+        if (last == 'M' || last == 'm') val *= 1024 * 1024;
+        else if (last == 'K' || last == 'k') val *= 1024;
+    }
+    return val;
+}
+
 std::string ConfigParser::current() {
     if (pos >= tokens.size())
         throw std::runtime_error("Unexpected end of tokens");
@@ -81,6 +91,20 @@ ServerConfig ConfigParser::parseServer() {
         else if (current() == "root") {
             advance();
             server.root = current();
+            advance();
+            expect(";");
+        }
+        else if (current() == "client_max_body_size") {
+            advance();
+            server.client_max_body_size = parseSize(current());
+            advance();
+            expect(";");
+        }
+        else if (current() == "error_page") {
+            advance();
+            int code = atoi(current().c_str());
+            advance();
+            server.error_pages[code] = current();
             advance();
             expect(";");
         }
