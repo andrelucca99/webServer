@@ -17,18 +17,30 @@
 
 #include <iostream>
 #include <cstring>
+#include <cstdlib>
 #include <vector>
 #include <map>
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <poll.h>
 
 #define BUFFER_SIZE 4096
 
+struct ClientState {
+    size_t      serverIdx;
+    std::string readBuf;
+    std::string writeBuf;
+};
+
 Server::Server(const Config& config) : _config(config) {}
 Server::~Server() {}
+
+static void setNonBlocking(int fd) {
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+}
 
 static int createSocket(const ServerConfig& cfg) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -52,7 +64,7 @@ static int createSocket(const ServerConfig& cfg) {
         return -1;
     }
 
-    if (listen(fd, 10) < 0) {
+    if (listen(fd, 128) < 0) {
         perror("listen");
         close(fd);
         return -1;
@@ -61,15 +73,55 @@ static int createSocket(const ServerConfig& cfg) {
     return fd;
 }
 
+static bool isRequestComplete(const std::string& buf) {
+    size_t headerEnd = buf.find("\r\n\r\n");
+    if (headerEnd == std::string::npos)
+        return false;
+
+    std::string headers = buf.substr(0, headerEnd);
+
+    size_t clPos = headers.find("Content-Length:");
+    if (clPos == std::string::npos)
+        clPos = headers.find("content-length:");
+    if (clPos == std::string::npos)
+        return true;
+
+    size_t colon = headers.find(':', clPos);
+    size_t valStart = headers.find_first_not_of(" \t", colon + 1);
+    if (valStart == std::string::npos)
+        return true;
+
+    size_t contentLength = static_cast<size_t>(atoi(headers.c_str() + valStart));
+    return buf.size() >= headerEnd + 4 + contentLength;
+}
+
+static bool isServerFd(const std::vector<int>& serverFds, int fd, size_t& idx) {
+    for (size_t j = 0; j < serverFds.size(); j++) {
+        if (serverFds[j] == fd) {
+            idx = j;
+            return true;
+        }
+    }
+    return false;
+}
+
+static void removeFd(std::vector<pollfd>& fds, std::map<int, ClientState>& clients, size_t i) {
+    close(fds[i].fd);
+    clients.erase(fds[i].fd);
+    fds.erase(fds.begin() + i);
+}
+
 void Server::run() {
-    std::vector<int> serverFds;
+    std::vector<int>    serverFds;
     std::vector<pollfd> fds;
-    std::map<int, size_t> clientToServer;
+    std::map<int, ClientState> clients;
 
     for (size_t i = 0; i < _config.servers.size(); i++) {
         int fd = createSocket(_config.servers[i]);
         if (fd < 0)
             continue;
+
+        setNonBlocking(fd);
 
         int port = _config.servers[i].port != 0 ? _config.servers[i].port : 8080;
         std::cout << "Servidor " << i << " rodando na porta " << port << std::endl;
@@ -98,29 +150,25 @@ void Server::run() {
         }
 
         for (size_t i = 0; i < fds.size(); i++) {
-            if (!(fds[i].revents & POLLIN))
+            if (!fds[i].revents)
                 continue;
 
-            // check if it's a listening server socket
-            size_t serverIdx = serverFds.size();
-            for (size_t j = 0; j < serverFds.size(); j++) {
-                if (fds[i].fd == serverFds[j]) {
-                    serverIdx = j;
-                    break;
-                }
-            }
+            size_t serverIdx = 0;
+            if (isServerFd(serverFds, fds[i].fd, serverIdx)) {
+                if (!(fds[i].revents & POLLIN))
+                    continue;
 
-            if (serverIdx < serverFds.size()) {
-                // new connection
                 struct sockaddr_in clientAddr;
                 socklen_t addrlen = sizeof(clientAddr);
                 int clientFd = accept(fds[i].fd, (struct sockaddr*)&clientAddr, &addrlen);
-                if (clientFd < 0) {
-                    perror("accept");
+                if (clientFd < 0)
                     continue;
-                }
 
-                clientToServer[clientFd] = serverIdx;
+                setNonBlocking(clientFd);
+
+                ClientState st;
+                st.serverIdx = serverIdx;
+                clients[clientFd] = st;
 
                 pollfd cpfd;
                 cpfd.fd = clientFd;
@@ -128,32 +176,38 @@ void Server::run() {
                 cpfd.revents = 0;
                 fds.push_back(cpfd);
             } else {
-                // client request
-                size_t idx = clientToServer[fds[i].fd];
+                ClientState& st = clients[fds[i].fd];
 
-                memset(buffer, 0, BUFFER_SIZE);
-                ssize_t bytes = read(fds[i].fd, buffer, BUFFER_SIZE - 1);
+                if (fds[i].revents & POLLIN) {
+                    ssize_t bytes = read(fds[i].fd, buffer, BUFFER_SIZE - 1);
+                    if (bytes <= 0) {
+                        removeFd(fds, clients, i);
+                        i--;
+                        continue;
+                    }
 
-                if (bytes <= 0) {
-                    close(fds[i].fd);
-                    clientToServer.erase(fds[i].fd);
-                    fds.erase(fds.begin() + i);
+                    st.readBuf.append(buffer, bytes);
+
+                    if (isRequestComplete(st.readBuf)) {
+                        HttpRequestParser parser;
+                        HttpRequest request = parser.parse(st.readBuf);
+                        HttpResponse response = Router::handleRequest(request, _config.servers[st.serverIdx]);
+                        st.writeBuf = response.build();
+                        fds[i].events = POLLOUT;
+                    }
+                } else if (fds[i].revents & POLLOUT) {
+                    ssize_t sent = send(fds[i].fd, st.writeBuf.c_str(), st.writeBuf.size(), 0);
+                    if (sent > 0)
+                        st.writeBuf.erase(0, static_cast<size_t>(sent));
+
+                    if (sent <= 0 || st.writeBuf.empty()) {
+                        removeFd(fds, clients, i);
+                        i--;
+                    }
+                } else {
+                    removeFd(fds, clients, i);
                     i--;
-                    continue;
                 }
-
-                std::string rawRequest(buffer, bytes);
-                HttpRequestParser parser;
-                HttpRequest request = parser.parse(rawRequest);
-
-                HttpResponse response = Router::handleRequest(request, _config.servers[idx]);
-                std::string responseStr = response.build();
-
-                send(fds[i].fd, responseStr.c_str(), responseStr.size(), 0);
-                close(fds[i].fd);
-                clientToServer.erase(fds[i].fd);
-                fds.erase(fds.begin() + i);
-                i--;
             }
         }
     }

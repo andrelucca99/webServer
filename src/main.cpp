@@ -14,19 +14,21 @@
 #include "./includes/ConfigParser.hpp"
 #include <iostream>
 
-int main() {
+int main(int argc, char* argv[]) {
+    const char* configPath = (argc > 1) ? argv[1] : "config.conf";
+
     ConfigParser parser;
     Config config;
 
     try {
-        config = parser.parse("config.conf");
+        config = parser.parse(configPath);
     } catch (const std::exception& e) {
         std::cerr << "Config error: " << e.what() << std::endl;
         return 1;
     }
 
     if (config.servers.empty()) {
-        std::cerr << "No server block found in config.conf" << std::endl;
+        std::cerr << "No server block found in " << configPath << std::endl;
         return 1;
     }
 
