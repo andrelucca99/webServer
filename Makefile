@@ -19,7 +19,6 @@ SRCS        = \
 	$(CONFIG_DIR)/Tokenizer.cpp \
 	$(CONFIG_DIR)/ConfigParser.cpp \
 	$(SERVER_DIR)/Server.cpp \
-	$(SERVER_DIR)/Socket.cpp \
 	$(HTTP_DIR)/Router.cpp \
 	$(HTTP_DIR)/HttpRequestParser.cpp \
 	$(HTTP_DIR)/HttpResponse.cpp \
