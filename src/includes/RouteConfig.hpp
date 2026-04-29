@@ -15,10 +15,12 @@
 #include <vector>
 
 struct RouteConfig {
-    std::string path;
+    std::string              path;
     std::vector<std::string> methods;
-    std::string index;
-    bool autoindex;
+    std::string              index;
+    bool                     autoindex;
+    int                      redirect_code;
+    std::string              redirect_url;
 
-    RouteConfig() : autoindex(false) {}
+    RouteConfig() : autoindex(false), redirect_code(0) {}
 };
