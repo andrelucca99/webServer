@@ -17,6 +17,8 @@
 #include <cstdio>
 #include <iostream>
 #include <map>
+#include <dirent.h>
+#include <sys/stat.h>
 
 static std::string errorBody(int status, const ServerConfig& config) {
     std::map<int, std::string>::const_iterator it = config.error_pages.find(status);
@@ -31,6 +33,26 @@ static std::string errorBody(int status, const ServerConfig& config) {
     std::ostringstream oss;
     oss << "<h1>" << status << " " << HttpResponse::reasonPhraseFor(status) << "</h1>";
     return oss.str();
+}
+
+static std::string generateAutoindex(const std::string& dirPath, const std::string& uriPath) {
+    DIR* dir = opendir(dirPath.c_str());
+    if (!dir) return "";
+
+    std::ostringstream html;
+    html << "<!DOCTYPE html><html><head><title>Index of " << uriPath << "</title></head>"
+         << "<body><h1>Index of " << uriPath << "</h1><hr><pre>";
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        std::string name = entry->d_name;
+        if (name == ".") continue;
+        html << "<a href=\"" << name << "\">" << name << "</a>\n";
+    }
+    closedir(dir);
+
+    html << "</pre><hr></body></html>";
+    return html.str();
 }
 
 static std::string urlDecode(const std::string& str) {
@@ -135,6 +157,34 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
     }
 
     if (request.method == "GET") {
+        struct stat st;
+        if (stat(fullPath.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+            std::string idx = (route && !route->index.empty()) ? route->index : "index.html";
+            std::string idxPath = fullPath;
+            if (!idxPath.empty() && idxPath[idxPath.size() - 1] != '/') idxPath += "/";
+            idxPath += idx;
+
+            std::string content = readFile(idxPath);
+            if (!content.empty()) {
+                res.status = 200;
+                res.body = content;
+                res.contentType = "text/html";
+                return res;
+            }
+
+            if (route && route->autoindex) {
+                res.status = 200;
+                res.body = generateAutoindex(fullPath, request.path);
+                res.contentType = "text/html";
+                return res;
+            }
+
+            res.status = 403;
+            res.body = errorBody(403, config);
+            res.contentType = "text/html";
+            return res;
+        }
+
         std::string content = readFile(fullPath);
         if (!content.empty()) {
             res.status = 200;
