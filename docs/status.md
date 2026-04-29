@@ -100,13 +100,6 @@ O que precisa ser feito:
 - Parsear diretiva `upload_store <path>` em `ConfigParser`
 - Ajustar o handler de POST no `Router` para salvar no `upload_store` da rota
 
-#### Inconsistência em `HttpResponse`
-Existem dois builders com campos diferentes:
-- `toString()` — usa `_status_code`, `_reason_phrase`, `_headers`, `_body` (privados)
-- `build()` — usa `status`, `body`, `contentType`, `location` (públicos)
-
-O `Router` usa `build()`. Consolidar em uma única interface para evitar bugs futuros.
-
 ---
 
 ### Responsabilidades Compartilhadas
@@ -148,7 +141,7 @@ Coberturas mínimas necessárias:
 | Root por location | **Falta** |
 | Upload store config | **Falta** |
 | HTTP request parser | Feito |
-| HTTP response builder | Feito (mas inconsistente) |
+| HTTP response builder | Feito |
 | GET / POST / DELETE | Feito |
 | CGI | **Falta** (maior gap) |
 | poll() event loop | Feito |
