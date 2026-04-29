@@ -105,6 +105,8 @@ std::string HttpResponse::build() const {
 	std::stringstream response;
 
 	response << "HTTP/1.1 " << status << " " << reasonPhraseFor(status) << "\r\n";
+	if (!location.empty())
+		response << "Location: " << location << "\r\n";
 	response << "Content-Type: " << contentType << "\r\n";
 	response << "Content-Length: " << body.size() << "\r\n";
 	response << "\r\n";

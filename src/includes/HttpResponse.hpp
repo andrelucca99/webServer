@@ -37,9 +37,10 @@ class HttpResponse {
 		static std::string reasonPhraseFor(int code);
 		static std::string mimeTypeFor(const std::string& extension);
 
-		int status;
-    std::string body;
-    std::string contentType;
+		int         status;
+		std::string body;
+		std::string contentType;
+		std::string location;
 
 		std::string build() const;
 };
