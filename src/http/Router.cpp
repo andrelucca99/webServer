@@ -102,6 +102,14 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
     const RouteConfig* route = findRoute(config.routes, path);
 
+    if (route && route->redirect_code != 0) {
+        res.status = route->redirect_code;
+        res.location = route->redirect_url;
+        res.body = "";
+        res.contentType = "text/html";
+        return res;
+    }
+
     if (route && !isMethodAllowed(*route, request.method)) {
         res.status = 405;
         res.body = errorBody(405, config);
