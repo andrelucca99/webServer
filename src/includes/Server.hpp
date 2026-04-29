@@ -12,15 +12,14 @@
 
 #pragma once
 
-#include "ServerConfig.hpp"
+#include "Config.hpp"
 
 class Server {
 private:
-    ServerConfig config;
+    Config _config;
 
 public:
-    Server();
-    Server(const ServerConfig& config);
+    Server(const Config& config);
     ~Server();
 
     void run();

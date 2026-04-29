@@ -16,71 +16,148 @@
 #include "../includes/HttpRequestParser.hpp"
 
 #include <iostream>
-#include <sstream>
-#include <fstream>
 #include <cstring>
+#include <vector>
+#include <map>
 
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <poll.h>
 
 #define BUFFER_SIZE 4096
 
-Server::Server(const ServerConfig& config) : config(config) {}
+Server::Server(const Config& config) : _config(config) {}
 Server::~Server() {}
 
-void Server::run() {
-    int server_fd, client_socket;
-    struct sockaddr_in address;
-    socklen_t addrlen = sizeof(address);
-
-    char buffer[BUFFER_SIZE];
-
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd == 0) {
-        perror("socket failed");
-        return;
+static int createSocket(const ServerConfig& cfg) {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) {
+        perror("socket");
+        return -1;
     }
 
     int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    int port = config.port != 0 ? config.port : 8080;
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = config.host.empty() ? INADDR_ANY : inet_addr(config.host.c_str());
-    address.sin_port = htons(port);
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(cfg.port != 0 ? cfg.port : 8080);
+    addr.sin_addr.s_addr = cfg.host.empty() ? INADDR_ANY : inet_addr(cfg.host.c_str());
 
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("bind failed");
-        return;
+    if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("bind");
+        close(fd);
+        return -1;
     }
 
-    if (listen(server_fd, 10) < 0) {
+    if (listen(fd, 10) < 0) {
         perror("listen");
+        close(fd);
+        return -1;
+    }
+
+    return fd;
+}
+
+void Server::run() {
+    std::vector<int> serverFds;
+    std::vector<pollfd> fds;
+    std::map<int, size_t> clientToServer;
+
+    for (size_t i = 0; i < _config.servers.size(); i++) {
+        int fd = createSocket(_config.servers[i]);
+        if (fd < 0)
+            continue;
+
+        int port = _config.servers[i].port != 0 ? _config.servers[i].port : 8080;
+        std::cout << "Servidor " << i << " rodando na porta " << port << std::endl;
+
+        serverFds.push_back(fd);
+
+        pollfd pfd;
+        pfd.fd = fd;
+        pfd.events = POLLIN;
+        pfd.revents = 0;
+        fds.push_back(pfd);
+    }
+
+    if (fds.empty()) {
+        std::cerr << "Nenhum servidor iniciado." << std::endl;
         return;
     }
 
-    std::cout << "Servidor rodando na porta " << port << "...\n";
+    char buffer[BUFFER_SIZE];
 
     while (true) {
-        client_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
-        if (client_socket < 0) {
-            perror("accept");
-            continue;
+        int ready = poll(&fds[0], static_cast<nfds_t>(fds.size()), -1);
+        if (ready < 0) {
+            perror("poll");
+            break;
         }
 
-        memset(buffer, 0, BUFFER_SIZE);
-        read(client_socket, buffer, BUFFER_SIZE);
+        for (size_t i = 0; i < fds.size(); i++) {
+            if (!(fds[i].revents & POLLIN))
+                continue;
 
-        std::string rawRequest(buffer);
-        HttpRequestParser parser;
-        HttpRequest request = parser.parse(rawRequest);
+            // check if it's a listening server socket
+            size_t serverIdx = serverFds.size();
+            for (size_t j = 0; j < serverFds.size(); j++) {
+                if (fds[i].fd == serverFds[j]) {
+                    serverIdx = j;
+                    break;
+                }
+            }
 
-        HttpResponse response = Router::handleRequest(request, config);
+            if (serverIdx < serverFds.size()) {
+                // new connection
+                struct sockaddr_in clientAddr;
+                socklen_t addrlen = sizeof(clientAddr);
+                int clientFd = accept(fds[i].fd, (struct sockaddr*)&clientAddr, &addrlen);
+                if (clientFd < 0) {
+                    perror("accept");
+                    continue;
+                }
 
-        std::string responseStr = response.build();
+                clientToServer[clientFd] = serverIdx;
 
-        send(client_socket, responseStr.c_str(), responseStr.size(), 0);
-        close(client_socket);
+                pollfd cpfd;
+                cpfd.fd = clientFd;
+                cpfd.events = POLLIN;
+                cpfd.revents = 0;
+                fds.push_back(cpfd);
+            } else {
+                // client request
+                size_t idx = clientToServer[fds[i].fd];
+
+                memset(buffer, 0, BUFFER_SIZE);
+                ssize_t bytes = read(fds[i].fd, buffer, BUFFER_SIZE - 1);
+
+                if (bytes <= 0) {
+                    close(fds[i].fd);
+                    clientToServer.erase(fds[i].fd);
+                    fds.erase(fds.begin() + i);
+                    i--;
+                    continue;
+                }
+
+                std::string rawRequest(buffer, bytes);
+                HttpRequestParser parser;
+                HttpRequest request = parser.parse(rawRequest);
+
+                HttpResponse response = Router::handleRequest(request, _config.servers[idx]);
+                std::string responseStr = response.build();
+
+                send(fds[i].fd, responseStr.c_str(), responseStr.size(), 0);
+                close(fds[i].fd);
+                clientToServer.erase(fds[i].fd);
+                fds.erase(fds.begin() + i);
+                i--;
+            }
+        }
     }
+
+    for (size_t i = 0; i < fds.size(); i++)
+        close(fds[i].fd);
 }

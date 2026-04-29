@@ -30,7 +30,7 @@ int main() {
         return 1;
     }
 
-    Server server(config.servers[0]);
+    Server server(config);
     server.run();
     return 0;
 }
