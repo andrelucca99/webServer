@@ -151,6 +151,14 @@ RouteConfig ConfigParser::parseRoute() {
             advance();
             expect(";");
         }
+        else if (current() == "return") {
+            advance();
+            route.redirect_code = atoi(current().c_str());
+            advance();
+            route.redirect_url = current();
+            advance();
+            expect(";");
+        }
         else {
             throw std::runtime_error("Invalid directive in location");
         }
