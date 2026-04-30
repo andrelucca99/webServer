@@ -6,7 +6,7 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 19:12:34 by andre             #+#    #+#             */
-/*   Updated: 2026/04/27 06:00:12 by andre            ###   ########.fr       */
+/*   Updated: 2026/04/30 06:41:34 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <poll.h>
+#include <stdio.h>
 
 #define BUFFER_SIZE 4096
 
