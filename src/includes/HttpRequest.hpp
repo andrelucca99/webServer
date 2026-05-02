@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jtertuli <jtertuli@student.42sp.org.br>     +#+  +:+       +#+       */
+/*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/06 12:00:00 by jtertuli          #+#    #+#             */
-/*   Updated: 2026/04/06 12:00:00 by jtertuli         ###   ########.fr       */
+/*   Updated: 2026/05/02 08:26:50 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ struct HttpRequest {
     std::string http_version;                        // HTTP/1.1 ou HTTP/1.0
     std::map<std::string, std::string> headers;      // Host, Content-Type, Content-Length, etc
     std::string body;                                // POST/PUT data (vazio em GET/DELETE)
+    bool valid;
 
     HttpRequest() {}
 };

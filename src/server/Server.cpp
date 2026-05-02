@@ -6,7 +6,7 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 19:12:34 by andre             #+#    #+#             */
-/*   Updated: 2026/04/30 06:41:34 by andre            ###   ########.fr       */
+/*   Updated: 2026/05/02 09:49:23 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,9 +191,27 @@ void Server::run() {
 
                     if (isRequestComplete(st.readBuf)) {
                         HttpRequestParser parser;
-                        HttpRequest request = parser.parse(st.readBuf);
-                        HttpResponse response = Router::handleRequest(request, _config.servers[st.serverIdx]);
+                        HttpRequest request;
+                        HttpResponse response;
+
+                        ParseStatus status = parser.parse(st.readBuf, request);
+
+                        if (status == PARSE_BAD_REQUEST) {
+                            response.status = 400;
+                            response.body = "<h1>400 Bad Request</h1>";
+                            response.contentType = "text/html";
+                        }
+                        else if (status == PARSE_HTTP_VERSION) {
+                            response.status = 505;
+                            response.body = "<h1>505 HTTP Version Not Supported</h1>";
+                            response.contentType = "text/html";
+                        }
+                        else {
+                            response = Router::handleRequest(request, _config.servers[st.serverIdx]);
+                        }
+
                         st.writeBuf = response.build();
+                        st.readBuf.clear();
                         fds[i].events = POLLOUT;
                     }
                 } else if (fds[i].revents & POLLOUT) {
