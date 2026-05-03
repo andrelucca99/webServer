@@ -6,7 +6,7 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/17 17:01:45 by andre             #+#    #+#             */
-/*   Updated: 2026/04/27 06:36:37 by andre            ###   ########.fr       */
+/*   Updated: 2026/05/03 09:39:07 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,25 @@
 #include <map>
 #include <dirent.h>
 #include <sys/stat.h>
+
+static std::string sanitizeFilename(const std::string& filename) {
+    std::string clean;
+
+    for (size_t i = 0; i < filename.size(); i++) {
+        char c = filename[i];
+
+        if (c == '/' || c == '\\')
+            continue;
+
+        clean += c;
+    }
+
+    // evita nomes vazios
+    if (clean.empty())
+        clean = "upload.bin";
+
+    return clean;
+}
 
 static std::string errorBody(int status, const ServerConfig& config) {
     std::map<int, std::string>::const_iterator it = config.error_pages.find(status);
@@ -153,13 +172,94 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
     }
 
     if (request.method == "POST") {
-        if (writeFile(fullPath, request.body)) {
-            res.status = 201;
-            res.body = "<h1>201 Created</h1>";
-        } else {
-            res.status = 500;
-            res.body = errorBody(500, config);
+
+        if (!request.isMultipart) {
+            res.status = 400;
+            res.body = errorBody(400, config);
+            res.contentType = "text/html";
+            return res;
         }
+
+        if (request.boundary.empty()) {
+            res.status = 400;
+            res.body = errorBody(400, config);
+            res.contentType = "text/html";
+            return res;
+        }
+
+        // MULTIPART (UPLOAD)
+        const std::string& body = request.body;
+        const std::string& boundary = request.boundary;
+
+        size_t pos = 0;
+        bool saved = false;
+
+        while (true) {
+            size_t partStart = body.find(boundary, pos);
+            if (partStart == std::string::npos)
+                break;
+
+            partStart += boundary.length();
+
+            if (body.substr(partStart, 2) == "--")
+                break;
+
+            if (body.substr(partStart, 2) == "\r\n")
+                partStart += 2;
+
+            size_t headersEnd = body.find("\r\n\r\n", partStart);
+            if (headersEnd == std::string::npos)
+                break;
+
+            std::string partHeaders = body.substr(partStart, headersEnd - partStart);
+
+            size_t filenamePos = partHeaders.find("filename=\"");
+            if (filenamePos == std::string::npos) {
+                pos = headersEnd;
+                continue;
+            }
+
+            filenamePos += 10;
+            size_t filenameEnd = partHeaders.find("\"", filenamePos);
+
+            std::string filename = partHeaders.substr(filenamePos, filenameEnd - filenamePos);
+            filename = sanitizeFilename(filename);
+
+            size_t dataStart = headersEnd + 4;
+            size_t nextBoundary = body.find(boundary, dataStart);
+
+            if (nextBoundary == std::string::npos)
+                break;
+
+            size_t dataEnd = nextBoundary;
+
+            if (body.substr(dataEnd - 2, 2) == "\r\n")
+                dataEnd -= 2;
+
+            std::string fileData = body.substr(dataStart, dataEnd - dataStart);
+
+            std::string uploadPath = config.root + "/" + filename;
+
+            if (!writeFile(uploadPath, fileData)) {
+                res.status = 500;
+                res.body = errorBody(500, config);
+                res.contentType = "text/html";
+                return res;
+            }
+
+            saved = true;
+            pos = nextBoundary;
+        }
+
+        if (!saved) {
+            res.status = 400;
+            res.body = errorBody(400, config);
+            res.contentType = "text/html";
+            return res;
+        }
+
+        res.status = 201;
+        res.body = "<h1>File Uploaded</h1>";
         res.contentType = "text/html";
         return res;
     }
