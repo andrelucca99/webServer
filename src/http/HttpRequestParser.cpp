@@ -6,7 +6,7 @@
 /*   By: andre <andre@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/06 12:00:00 by jtertuli          #+#    #+#             */
-/*   Updated: 2026/05/02 09:50:56 by andre            ###   ########.fr       */
+/*   Updated: 2026/05/03 09:23:55 by andre            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,12 +36,6 @@ bool HttpRequestParser::isValidNumber(const std::string& str) {
     return !str.empty();
 }
 
-static bool isValidMethod(const std::string& method) {
-    return method == "GET" ||
-           method == "POST" ||
-           method == "DELETE";
-}
-
 ParseStatus HttpRequestParser::parseRequestLine(const std::string& line, HttpRequest& req) {
     size_t first = line.find(' ');
     size_t second = line.find(' ', first + 1);
@@ -52,9 +46,6 @@ ParseStatus HttpRequestParser::parseRequestLine(const std::string& line, HttpReq
     req.method = line.substr(0, first);
     req.uri = line.substr(first + 1, second - first - 1);
     req.http_version = line.substr(second + 1);
-
-    if (!isValidMethod(req.method))
-        return PARSE_BAD_REQUEST;
 
     if (req.http_version != "HTTP/1.1" && req.http_version != "HTTP/1.0")
         return PARSE_HTTP_VERSION;
@@ -107,6 +98,27 @@ ParseStatus HttpRequestParser::parseHeaders(const std::string& raw, HttpRequest&
             key[i] = static_cast<char>(std::tolower(key[i]));
 
         req.headers[key] = value;
+
+        // multipart detection
+        if (key == "content-type") {
+            if (value.find("multipart/form-data") != std::string::npos) {
+
+                size_t pos = value.find("boundary=");
+                if (pos != std::string::npos) {
+
+                    size_t end = value.find(';', pos);
+                    std::string boundaryValue;
+
+                    if (end != std::string::npos)
+                        boundaryValue = value.substr(pos + 9, end - (pos + 9));
+                    else
+                        boundaryValue = value.substr(pos + 9);
+
+                    req.isMultipart = true;
+                    req.boundary = "--" + boundaryValue;
+                }
+            }
+        }
 
         if (end == raw.size())
             break;
