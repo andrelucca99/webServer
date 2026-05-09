@@ -34,7 +34,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 | README.md (cap. V do subject) | ✅ | Jefferson — `7e81e2a` |
 | CGI (`fork` + `execve` + `pipe`) | ❌ | Jefferson (divisão original) |
 | `root` por location | ❌ | — |
-| Diretiva `upload_store` (path configurável de upload por rota) | ❌ | — |
+| Diretiva `upload_store` (path configurável de upload por rota) | ✅ | Jefferson — `a75b607`, `8b05ff4`, `51ec167`, `6543326` |
 | Timeout de conexão no `poll()` | ❌ | — |
 | Tratamento de `POLLHUP` / `POLLERR` | ⚠️ | — |
 | Conformidade `errno` após I/O | ⚠️ | — |
@@ -83,11 +83,6 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
   - Parsear `root` dentro de blocos `location` em [`ConfigParser::parseRoute`](../src/config/ConfigParser.cpp#L124).
   - Em [`Router::handleRequest`](../src/http/Router.cpp#L115), usar `route->root` quando definido (com fallback para `config.root`).
 
-- [ ] **Diretiva `upload_store` por rota**
-  - Adicionar `std::string upload_store` em [`RouteConfig.hpp`](../src/includes/RouteConfig.hpp).
-  - Parsear `upload_store <path>;` em `ConfigParser::parseRoute`.
-  - No handler de POST/multipart ([`Router.cpp:241`](../src/http/Router.cpp#L241)), usar `route->upload_store` em vez de `config.root`.
-
 - [ ] **Testes de integração — CGI**
   Pendente até CGI estar implementado. Cobrir execução de script, env vars,
   parsing da saída, timeout. Adicionar como `tests/test_cgi.sh`.
@@ -104,6 +99,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 - README.md conforme cap. V do subject — `7e81e2a`.
 - Build separado de testes unitários (`Makefile.test`, `test_parser`) — `bb83dcd`, `31dd67a`, `b3656d3`.
 - Suite de integração modular em `tests/` (GET, POST, DELETE, redirect, errors, autoindex, security, concurrent) — `2d264be`, `f00e5ea`, `037f0f2`, `c6e1a3c`, `84dbf21`, `658694f`, `0388967`, `55e46a1`.
+- Diretiva `upload_store` por rota (struct + parser + Router + asserts em `tests/test_post.sh`) — `a75b607`, `8b05ff4`, `51ec167`, `6543326`.
 - Limpeza de código morto (classe `Socket`, `HttpResponse` legado) — `69ab058`, `d59fd85`.
 
 ---
