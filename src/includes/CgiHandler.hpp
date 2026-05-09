@@ -44,6 +44,7 @@ class CgiHandler {
         std::string         _interpreter;
 
         std::map<std::string, std::string> _buildEnv() const;
+        HttpResponse                       _errorResponse(int status) const;
 
         CgiHandler(const CgiHandler&);
         CgiHandler& operator=(const CgiHandler&);

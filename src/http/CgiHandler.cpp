@@ -15,6 +15,14 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <poll.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#define CGI_TIMEOUT_MS 5000
+#define CGI_READ_BUF   4096
 
 static std::string headerToEnvKey(const std::string& name) {
     std::string out = "HTTP_";
@@ -122,17 +130,119 @@ std::map<std::string, std::string> CgiHandler::_buildEnv() const {
     return env;
 }
 
+HttpResponse CgiHandler::_errorResponse(int status) const {
+    HttpResponse res;
+    res.status = status;
+    res.contentType = "text/html";
+    std::ostringstream oss;
+    oss << "<h1>" << status << " " << HttpResponse::reasonPhraseFor(status) << "</h1>";
+    res.body = oss.str();
+    return res;
+}
+
 HttpResponse CgiHandler::execute() {
+    signal(SIGPIPE, SIG_IGN);
+
     std::map<std::string, std::string> env = _buildEnv();
     char** envp = mapToEnvp(env);
     char** argv = buildArgv(_interpreter, _scriptPath);
 
+    int in_pipe[2];
+    int out_pipe[2];
+
+    if (pipe(in_pipe) < 0) {
+        freeStrArray(envp); freeStrArray(argv);
+        return _errorResponse(500);
+    }
+    if (pipe(out_pipe) < 0) {
+        close(in_pipe[0]); close(in_pipe[1]);
+        freeStrArray(envp); freeStrArray(argv);
+        return _errorResponse(500);
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(in_pipe[0]); close(in_pipe[1]);
+        close(out_pipe[0]); close(out_pipe[1]);
+        freeStrArray(envp); freeStrArray(argv);
+        return _errorResponse(500);
+    }
+
+    if (pid == 0) {
+        // child
+        dup2(in_pipe[0], STDIN_FILENO);
+        dup2(out_pipe[1], STDOUT_FILENO);
+        close(in_pipe[0]);  close(in_pipe[1]);
+        close(out_pipe[0]); close(out_pipe[1]);
+
+        std::string dir = _scriptPath;
+        size_t slash = dir.find_last_of('/');
+        if (slash != std::string::npos)
+            dir = dir.substr(0, slash);
+        else
+            dir = ".";
+        if (chdir(dir.c_str()) != 0)
+            _exit(1);
+
+        execve(_interpreter.c_str(), argv, envp);
+        _exit(1);
+    }
+
+    // parent
+    close(in_pipe[0]);
+    close(out_pipe[1]);
+
+    if (!_request.body.empty()) {
+        const char* p = _request.body.data();
+        size_t left = _request.body.size();
+        while (left > 0) {
+            ssize_t n = write(in_pipe[1], p, left);
+            if (n <= 0) break;
+            p += n;
+            left -= static_cast<size_t>(n);
+        }
+    }
+    close(in_pipe[1]);
+
+    std::string output;
+    bool timed_out = false;
+    struct pollfd pfd;
+    pfd.fd = out_pipe[0];
+    pfd.events = POLLIN;
+    while (true) {
+        int pr = poll(&pfd, 1, CGI_TIMEOUT_MS);
+        if (pr < 0) break;
+        if (pr == 0) { timed_out = true; break; }
+        if (pfd.revents & (POLLIN | POLLHUP)) {
+            char buf[CGI_READ_BUF];
+            ssize_t n = read(out_pipe[0], buf, sizeof(buf));
+            if (n <= 0) break;
+            output.append(buf, static_cast<size_t>(n));
+        } else {
+            break;
+        }
+    }
+    close(out_pipe[0]);
+
+    if (timed_out)
+        kill(pid, SIGKILL);
+
+    int status = 0;
+    waitpid(pid, &status, 0);
+
     freeStrArray(envp);
     freeStrArray(argv);
 
+    if (timed_out)
+        return _errorResponse(504);
+    if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+        return _errorResponse(502);
+    if (WIFSIGNALED(status))
+        return _errorResponse(502);
+
     HttpResponse res;
-    res.status = 501;
-    res.body = "<h1>501 CGI not implemented yet</h1>";
+    res.status = 200;
     res.contentType = "text/html";
+    res.body = output;
     return res;
 }
