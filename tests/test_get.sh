@@ -50,4 +50,10 @@ assert_header "GET / Connection: close" \
 assert_status "GET porta 8081" \
     "curl -s -i $BASE_URL_RO/" 200
 
+# root por location: GET /docs/test.html deve servir de www/alt/docs/test.html
+assert_status "GET /docs/test.html (root por location)" \
+    "curl -s -i $BASE_URL/docs/test.html" 200
+assert_body "GET /docs/test.html corpo de www/alt/" \
+    "curl -s -i $BASE_URL/docs/test.html" "served from alt root"
+
 suite_summary
