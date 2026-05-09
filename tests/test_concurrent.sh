@@ -37,7 +37,7 @@ fi
 WWW_DIR="$(cd "$SCRIPT_DIR/../www" && pwd)"
 echo "x" > "$WWW_DIR/concurrent_a.txt"
 echo "y" > "$WWW_DIR/concurrent_b.txt"
-trap 'rm -rf "$TMP"; rm -f "$WWW_DIR"/concurrent_*.txt' EXIT
+trap 'rm -rf "$TMP"; rm -f "$WWW_DIR"/concurrent_*.txt "$WWW_DIR"/up.txt' EXIT
 
 (curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/" > "$TMP/m_get") &
 (curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/concurrent_a.txt" > "$TMP/m_del") &

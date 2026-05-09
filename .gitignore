@@ -3,3 +3,10 @@
 .claude
 !README.md
 !*_roadmap.md
+
+# build artefacts
+*.o
+webserv_test
+
+# fixtures geradas por testes (caso o cleanup falhe)
+big.txt

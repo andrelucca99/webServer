@@ -13,7 +13,7 @@ suite_header
 
 WWW_DIR="$(cd "$SCRIPT_DIR/../www" && pwd)"
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"; rm -f "$WWW_DIR"/upload_test_*.txt "$WWW_DIR"/hack.txt' EXIT
+trap 'rm -rf "$TMP"; rm -f "$WWW_DIR"/upload_test_*.txt "$WWW_DIR"/hack.txt "$WWW_DIR"/....hack.txt' EXIT
 
 # fixture
 echo "conteudo de upload" > "$TMP/upload_test_simple.txt"
