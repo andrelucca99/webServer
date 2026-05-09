@@ -12,6 +12,7 @@
 
 #include "../includes/CgiHandler.hpp"
 #include <cctype>
+#include <cstring>
 #include <map>
 #include <sstream>
 
@@ -28,6 +29,38 @@ static std::string itos(long long n) {
     std::ostringstream oss;
     oss << n;
     return oss.str();
+}
+
+static char* dupStr(const std::string& s) {
+    char* out = new char[s.size() + 1];
+    std::memcpy(out, s.c_str(), s.size() + 1);
+    return out;
+}
+
+static char** mapToEnvp(const std::map<std::string, std::string>& env) {
+    char** envp = new char*[env.size() + 1];
+    size_t i = 0;
+    typedef std::map<std::string, std::string>::const_iterator It;
+    for (It it = env.begin(); it != env.end(); ++it, ++i)
+        envp[i] = dupStr(it->first + "=" + it->second);
+    envp[i] = NULL;
+    return envp;
+}
+
+static char** buildArgv(const std::string& interpreter, const std::string& script) {
+    char** argv = new char*[3];
+    argv[0] = dupStr(interpreter);
+    argv[1] = dupStr(script);
+    argv[2] = NULL;
+    return argv;
+}
+
+static void freeStrArray(char** arr) {
+    if (!arr)
+        return;
+    for (size_t i = 0; arr[i] != NULL; ++i)
+        delete[] arr[i];
+    delete[] arr;
 }
 
 CgiHandler::CgiHandler(const HttpRequest&  request,
@@ -91,7 +124,11 @@ std::map<std::string, std::string> CgiHandler::_buildEnv() const {
 
 HttpResponse CgiHandler::execute() {
     std::map<std::string, std::string> env = _buildEnv();
-    (void)env;
+    char** envp = mapToEnvp(env);
+    char** argv = buildArgv(_interpreter, _scriptPath);
+
+    freeStrArray(envp);
+    freeStrArray(argv);
 
     HttpResponse res;
     res.status = 501;
