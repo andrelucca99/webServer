@@ -12,8 +12,10 @@ ensure_server_up "$BASE_URL/"
 suite_header
 
 WWW_DIR="$(cd "$SCRIPT_DIR/../www" && pwd)"
+UPLOAD_DIR="$WWW_DIR/uploads"
+mkdir -p "$UPLOAD_DIR"
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"; rm -f "$WWW_DIR"/upload_test_*.txt "$WWW_DIR"/hack.txt "$WWW_DIR"/....hack.txt' EXIT
+trap 'rm -rf "$TMP"; rm -f "$WWW_DIR"/upload_test_*.txt "$WWW_DIR"/hack.txt "$WWW_DIR"/....hack.txt "$UPLOAD_DIR"/upload_test_*.txt' EXIT
 
 # fixture
 echo "conteudo de upload" > "$TMP/upload_test_simple.txt"
@@ -54,5 +56,22 @@ assert_status "POST multipart sem boundary util" \
 head -c 2000000 </dev/zero | tr '\0' 'A' > "$TMP/big.bin"
 assert_status "POST acima de client_max_body_size" \
     "curl -s -i -X POST $BASE_URL/ -F 'file=@$TMP/big.bin'" 413
+
+# 6) upload_store por rota: POST em /upload deve gravar em www/uploads/, nao em www/
+echo "destino dedicado" > "$TMP/upload_test_routed.txt"
+assert_status "POST /upload usa upload_store" \
+    "curl -s -i -X POST $BASE_URL/upload -F 'file=@$TMP/upload_test_routed.txt'" 201
+
+if [ -f "$UPLOAD_DIR/upload_test_routed.txt" ]; then
+    pass "POST /upload gravou em www/uploads/"
+else
+    fail "POST /upload gravou em www/uploads/" "arquivo nao encontrado em $UPLOAD_DIR"
+fi
+
+if [ -f "$WWW_DIR/upload_test_routed.txt" ]; then
+    fail "POST /upload nao caiu em www/" "arquivo vazou para fora de uploads/"
+else
+    pass "POST /upload nao caiu em www/ (upload_store respeitado)"
+fi
 
 suite_summary
