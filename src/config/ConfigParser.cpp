@@ -165,6 +165,12 @@ RouteConfig ConfigParser::parseRoute() {
             advance();
             expect(";");
         }
+        else if (current() == "root") {
+            advance();
+            route.root = current();
+            advance();
+            expect(";");
+        }
         else {
             throw std::runtime_error("Invalid directive in location");
         }
