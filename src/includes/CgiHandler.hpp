@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #pragma once
+#include <map>
 #include <string>
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
@@ -41,6 +42,8 @@ class CgiHandler {
         const ServerConfig& _server;
         std::string         _scriptPath;
         std::string         _interpreter;
+
+        std::map<std::string, std::string> _buildEnv() const;
 
         CgiHandler(const CgiHandler&);
         CgiHandler& operator=(const CgiHandler&);
