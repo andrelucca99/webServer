@@ -22,6 +22,7 @@ struct RouteConfig {
     int                      redirect_code;
     std::string              redirect_url;
     std::string              upload_store;
+    std::string              root;
 
     RouteConfig() : autoindex(false), redirect_code(0) {}
 };
