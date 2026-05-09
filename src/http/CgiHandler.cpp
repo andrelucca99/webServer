@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../includes/CgiHandler.hpp"
+#include <map>
 
 CgiHandler::CgiHandler(const HttpRequest&  request,
                        const RouteConfig&  route,
@@ -24,6 +25,22 @@ CgiHandler::CgiHandler(const HttpRequest&  request,
       _interpreter(interpreter) {}
 
 CgiHandler::~CgiHandler() {}
+
+std::string CgiHandler::matchCgi(const RouteConfig& route, const std::string& path) {
+    typedef std::map<std::string, std::string>::const_iterator It;
+    for (It it = route.cgi_extensions.begin(); it != route.cgi_extensions.end(); ++it) {
+        const std::string& ext = it->first;
+        if (ext.empty() || ext.size() > path.size())
+            continue;
+        size_t pos = path.rfind(ext);
+        if (pos == std::string::npos)
+            continue;
+        size_t after = pos + ext.size();
+        if (after == path.size() || path[after] == '/')
+            return it->second;
+    }
+    return "";
+}
 
 HttpResponse CgiHandler::execute() {
     HttpResponse res;

@@ -28,6 +28,13 @@ class CgiHandler {
 
         HttpResponse execute();
 
+        // Retorna o interpretador associado a primeira extensao registrada em
+        // route.cgi_extensions que case com o path (como sufixo do path ou
+        // imediatamente seguida por '/'). Retorna string vazia se nenhuma
+        // extensao casar.
+        static std::string matchCgi(const RouteConfig& route,
+                                    const std::string& path);
+
     private:
         const HttpRequest&  _request;
         const RouteConfig&  _route;
