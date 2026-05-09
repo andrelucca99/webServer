@@ -33,7 +33,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 | Build separado de testes (`Makefile.test`, `test_parser`) | ✅ | Jefferson — `bb83dcd`, `31dd67a`, `b3656d3` |
 | README.md (cap. V do subject) | ✅ | Jefferson — `7e81e2a` |
 | CGI (`fork` + `execve` + `pipe`) | ❌ | Jefferson (divisão original) |
-| `root` por location | ❌ | — |
+| `root` por location | ✅ | Jefferson — `fcbfc48`, `f83d1d9`, `beb7d41`, `78db994` |
 | Diretiva `upload_store` (path configurável de upload por rota) | ✅ | Jefferson — `a75b607`, `8b05ff4`, `51ec167`, `6543326` |
 | Timeout de conexão no `poll()` | ❌ | — |
 | Tratamento de `POLLHUP` / `POLLERR` | ⚠️ | — |
@@ -78,11 +78,6 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
   - Parse da saída do CGI (headers + body) → `HttpResponse`.
   - Integração com event loop do `Server` (síncrono com timeout, ou assíncrono).
 
-- [ ] **`root` por `location`** (o exemplo `/kapouet` do subject)
-  - Adicionar `std::string root` em [`RouteConfig.hpp`](../src/includes/RouteConfig.hpp).
-  - Parsear `root` dentro de blocos `location` em [`ConfigParser::parseRoute`](../src/config/ConfigParser.cpp#L124).
-  - Em [`Router::handleRequest`](../src/http/Router.cpp#L115), usar `route->root` quando definido (com fallback para `config.root`).
-
 - [ ] **Testes de integração — CGI**
   Pendente até CGI estar implementado. Cobrir execução de script, env vars,
   parsing da saída, timeout. Adicionar como `tests/test_cgi.sh`.
@@ -100,6 +95,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 - Build separado de testes unitários (`Makefile.test`, `test_parser`) — `bb83dcd`, `31dd67a`, `b3656d3`.
 - Suite de integração modular em `tests/` (GET, POST, DELETE, redirect, errors, autoindex, security, concurrent) — `2d264be`, `f00e5ea`, `037f0f2`, `c6e1a3c`, `84dbf21`, `658694f`, `0388967`, `55e46a1`.
 - Diretiva `upload_store` por rota (struct + parser + Router + asserts em `tests/test_post.sh`) — `a75b607`, `8b05ff4`, `51ec167`, `6543326`.
+- Diretiva `root` por `location` (struct + parser + Router com fallback para `config.root` + asserts em `tests/test_get.sh`) — `fcbfc48`, `f83d1d9`, `beb7d41`, `78db994`.
 - Limpeza de código morto (classe `Socket`, `HttpResponse` legado) — `69ab058`, `d59fd85`.
 
 ---
