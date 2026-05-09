@@ -10,9 +10,9 @@ source "$SCRIPT_DIR/lib.sh"
 ensure_server_up "$BASE_URL/"
 suite_header
 
-# 1) .. literal no path
+# 1) .. literal no path (curl --path-as-is para nao normalizar no client)
 assert_status "GET /../etc/passwd -> 403" \
-    "curl -s -i $BASE_URL/../etc/passwd" 403
+    "curl -s -i --path-as-is $BASE_URL/../etc/passwd" 403
 
 # 2) .. URL-encoded (%2e%2e)
 assert_status "GET /%2e%2e/etc/passwd -> 403" \
@@ -24,7 +24,7 @@ assert_status "GET com %2e%2e%2f -> 403" \
 
 # 4) DELETE com path traversal
 assert_status "DELETE /../hack -> 403" \
-    "curl -s -i -X DELETE $BASE_URL/../hack" 403
+    "curl -s -i --path-as-is -X DELETE $BASE_URL/../hack" 403
 
 # 5) garantia: o body de erro nao expoe conteudo de fora de www/
 out=$(curl -s "$BASE_URL/%2e%2e/etc/passwd" 2>/dev/null)

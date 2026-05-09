@@ -23,8 +23,10 @@ assert_header "GET /old/foo tem Location: /" \
     "curl -s -i $BASE_URL/old/foo" "Location" "/"
 
 # curl segue redirect e termina em 200
-assert_status "GET /old com -L termina em 200" \
-    "curl -s -i -L $BASE_URL/old" 200
+final=$(curl -s -L -o /dev/null -w "%{http_code}" "$BASE_URL/old" 2>/dev/null)
+[ "$final" = "200" ] \
+    && pass "GET /old com -L termina em 200 (status=$final)" \
+    || fail "GET /old com -L termina em 200" "esperado 200, recebeu '$final'"
 
 # rotas sem return nao mandam Location
 out=$(curl -s -i "$BASE_URL/" 2>/dev/null)
