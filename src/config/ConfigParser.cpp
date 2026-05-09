@@ -171,6 +171,15 @@ RouteConfig ConfigParser::parseRoute() {
             advance();
             expect(";");
         }
+        else if (current() == "cgi_extension") {
+            advance();
+            std::string ext = current();
+            advance();
+            std::string interpreter = current();
+            advance();
+            route.cgi_extensions[ext] = interpreter;
+            expect(";");
+        }
         else {
             throw std::runtime_error("Invalid directive in location");
         }
