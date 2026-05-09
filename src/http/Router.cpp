@@ -153,7 +153,8 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
         return res;
     }
 
-    std::string fullPath = config.root;
+    std::string baseRoot = (route && !route->root.empty()) ? route->root : config.root;
+    std::string fullPath = baseRoot;
     if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
         fullPath += "/";
     if (!path.empty())
