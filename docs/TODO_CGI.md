@@ -13,13 +13,13 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
 
 ## Fase 1 — Configuração
 
-- [ ] **1. Campo `cgi_extensions` em `RouteConfig`**
+- [x] **1. Campo `cgi_extensions` em `RouteConfig`** — `1ff092c`
   Adicionar `std::map<std::string, std::string> cgi_extensions;` em
   [`src/includes/RouteConfig.hpp`](../src/includes/RouteConfig.hpp).
   Chave = extensão (`.py`), valor = caminho do interpretador (`/usr/bin/python3`).
   Inicializar vazio no construtor (não precisa entrar na lista de inicialização).
 
-- [ ] **2. Parsear diretiva `cgi_extension`**
+- [x] **2. Parsear diretiva `cgi_extension`** — `e3e29c2`
   Em [`ConfigParser::parseRoute`](../src/config/ConfigParser.cpp#L124), adicionar
   branch para `cgi_extension <ext> <interpreter>;`. Sintaxe esperada:
   ```nginx
@@ -34,14 +34,14 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
 
 ## Fase 2 — `CgiHandler` (boilerplate)
 
-- [ ] **3. Skeleton de `CgiHandler`**
+- [x] **3. Skeleton de `CgiHandler`** — `125247f`
   Criar `src/includes/CgiHandler.hpp` e `src/http/CgiHandler.cpp` com:
   - Construtor recebendo `(const HttpRequest&, const RouteConfig&, const ServerConfig&, const std::string& scriptPath, const std::string& interpreter)`.
   - Método público `HttpResponse execute();`.
   - Cabeçalho `By: jtertuli <jtertuli@student.42sp.org.br>`.
   Adicionar `src/http/CgiHandler.cpp` ao `Makefile` (variável `SRCS`).
 
-- [ ] **4. Helper de detecção por extensão**
+- [x] **4. Helper de detecção por extensão** — `9b7c278`
   Função estática (em `Router.cpp` ou `CgiHandler.cpp`):
   ```cpp
   // retorna interpretador se path bate com alguma extensão registrada na rota,
@@ -54,7 +54,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
 
 ## Fase 3 — Execução do processo CGI
 
-- [ ] **5. Construir env vars CGI**
+- [x] **5. Construir env vars CGI** — `fe382a2`
   Método privado que monta `std::map<std::string, std::string>` com:
   - `REQUEST_METHOD` (GET/POST/DELETE)
   - `PATH_INFO` (path do script)
@@ -69,18 +69,18 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
   - `SERVER_PROTOCOL=HTTP/1.1`
   - `HTTP_*` para cada header da request (ex.: `User-Agent` → `HTTP_USER_AGENT`).
 
-- [ ] **6. Converter env map → `char**`**
+- [x] **6. Converter env map → `char**`** — `0d8549d`
   Helper `char** buildEnvp(const std::map<std::string,std::string>&)`:
   - Aloca `KEY=VALUE` para cada par.
   - Termina com `NULL`.
   - Helper paralelo `freeEnvp(char**)` para limpeza.
   Idem para `argv` (`[interpreter, script, NULL]`).
 
-- [ ] **7. Pipes + `fork()`**
+- [x] **7. Pipes + `fork()`** — `95f3e1d`
   Criar dois `pipe()`s — um para stdin do filho, um para stdout.
   Chamar `fork()`. Em caso de erro, retornar `502 Bad Gateway`.
 
-- [ ] **8. Branch filho**
+- [x] **8. Branch filho** — `95f3e1d`
   No processo filho:
   1. `dup2(stdin_pipe[0], STDIN_FILENO)` e `dup2(stdout_pipe[1], STDOUT_FILENO)`.
   2. Fechar todos os fds não usados (incluindo as outras pontas dos pipes).
@@ -88,7 +88,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
   4. `execve(interpreter, argv, envp)`.
   5. Em caso de falha do `execve`, `exit(1)` (pai detecta via waitpid).
 
-- [ ] **9. Branch pai — I/O via `poll()`**
+- [x] **9. Branch pai — I/O via `poll()`** — `95f3e1d`
   No processo pai:
   1. Fechar pontas não usadas dos pipes.
   2. Escrever `request.body` no `stdin_pipe[1]` em loop e fechar.
@@ -96,7 +96,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
   4. Subject **proíbe inspecionar `errno` pós-I/O**: usar apenas o retorno
      de `read`/`write` para decidir continuação.
 
-- [ ] **10. Supervisão do processo**
+- [x] **10. Supervisão do processo** — `95f3e1d`
   - `waitpid(pid, &status, WNOHANG)` em loop com timeout total (~5s).
   - Se timeout estourar: `kill(pid, SIGKILL)` + `waitpid` final, retornar
     `504 Gateway Timeout`.
