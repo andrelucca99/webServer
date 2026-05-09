@@ -238,7 +238,12 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
             std::string fileData = body.substr(dataStart, dataEnd - dataStart);
 
-            std::string uploadPath = config.root + "/" + filename;
+            std::string uploadDir = (route && !route->upload_store.empty())
+                ? route->upload_store
+                : config.root;
+            if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] == '/')
+                uploadDir.erase(uploadDir.size() - 1);
+            std::string uploadPath = uploadDir + "/" + filename;
 
             if (!writeFile(uploadPath, fileData)) {
                 res.status = 500;
