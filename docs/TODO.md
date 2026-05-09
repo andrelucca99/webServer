@@ -3,8 +3,7 @@
 > Estado real do código x requisitos do subject (24.0).
 > Atribuição feita a partir do `git log` (autor de cada commit), **não** da
 > divisão original do `webserv_divisao_projeto.pdf` — a dupla redividiu as
-> tarefas no meio do projeto. A divisão original (Pessoa A = infra,
-> Pessoa B = HTTP) deixou de valer.
+> tarefas no meio do projeto. 
 
 Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 
@@ -39,7 +38,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 | Timeout de conexão no `poll()` | ❌ | — |
 | Tratamento de `POLLHUP` / `POLLERR` | ⚠️ | — |
 | Conformidade `errno` após I/O | ⚠️ | — |
-| Testes de integração (curl/python) | ❌ | — |
+| Testes de integração (bash/curl/nc) | ✅ | Jefferson — `2d264be`, `f00e5ea`, `037f0f2`, `c6e1a3c`, `84dbf21`, `658694f`, `0388967`, `55e46a1` |
 
 ---
 
@@ -89,8 +88,9 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
   - Parsear `upload_store <path>;` em `ConfigParser::parseRoute`.
   - No handler de POST/multipart ([`Router.cpp:241`](../src/http/Router.cpp#L241)), usar `route->upload_store` em vez de `config.root`.
 
-- [ ] **Testes de integração**
-  Cobrir GET/POST/DELETE, autoindex, error pages, redirect 301, 404/405/413, CGI, conexões simultâneas. Subject recomenda Python/Go/C++. Aproveitar `test_webserv.sh` já existente como ponto de partida.
+- [ ] **Testes de integração — CGI**
+  Pendente até CGI estar implementado. Cobrir execução de script, env vars,
+  parsing da saída, timeout. Adicionar como `tests/test_cgi.sh`.
 
 ### ✅ Já entregue
 
@@ -102,7 +102,8 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 - Autoindex real (listagem de diretório) — `b5141dc`.
 - Redirect (`return <code> <url>` no config + header `Location` na resposta) — `a69175d`, `1bf772c`, `042af2d`, `c1a6d76`, `efe65e6`.
 - README.md conforme cap. V do subject — `7e81e2a`.
-- Build separado de testes (`Makefile.test`, `test_parser`) — `bb83dcd`, `31dd67a`, `b3656d3`.
+- Build separado de testes unitários (`Makefile.test`, `test_parser`) — `bb83dcd`, `31dd67a`, `b3656d3`.
+- Suite de integração modular em `tests/` (GET, POST, DELETE, redirect, errors, autoindex, security, concurrent) — `2d264be`, `f00e5ea`, `037f0f2`, `c6e1a3c`, `84dbf21`, `658694f`, `0388967`, `55e46a1`.
 - Limpeza de código morto (classe `Socket`, `HttpResponse` legado) — `69ab058`, `d59fd85`.
 
 ---
@@ -120,6 +121,6 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 ## Observações sobre a divisão
 
 - A divisão original (`webserv_divisao_projeto.pdf`) colocava:
-  - **Pessoa A (infra/sockets/poll/CGI):** seria André em ideia, mas na prática quem fechou `poll()` com múltiplos servers, autoindex, error_pages, redirect, integração ConfigParser↔Router e cleanups foi **Jefferson**.
-  - **Pessoa B (parser HTTP, response, GET/POST/DELETE/upload):** era Jefferson, mas **André** acabou implementando GET, POST, multipart/upload, validações HTTP no parser e parte da segurança do Router.
+  - **Pessoa A (infra/sockets/poll):** seria André em ideia, mas na prática quem fechou `poll()` com múltiplos servers, autoindex, error_pages, redirect, integração ConfigParser↔Router e cleanups foi **Jefferson**.
+  - **Pessoa B (parser HTTP, response, GET/POST/DELETE/upload/CGI):** era Jefferson, mas **André** acabou implementando GET, POST, multipart/upload, validações HTTP no parser e parte da segurança do Router.
 - Resultado: a dupla cruzou responsabilidades, mas **CGI** continua com o Jefferson conforme a divisão original do PDF — é o maior gap obrigatório e ninguém começou ainda.
