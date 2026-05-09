@@ -159,6 +159,12 @@ RouteConfig ConfigParser::parseRoute() {
             advance();
             expect(";");
         }
+        else if (current() == "upload_store") {
+            advance();
+            route.upload_store = current();
+            advance();
+            expect(";");
+        }
         else {
             throw std::runtime_error("Invalid directive in location");
         }
