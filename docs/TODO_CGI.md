@@ -157,7 +157,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
     }
     ```
 
-- [ ] **15. Suite `tests/test_cgi.sh`**
+- [x] **15. Suite `tests/test_cgi.sh`** — `6c5623d`
   Cobrir:
   - GET `/cgi-bin/hello.py?name=alice` → 200, body contém `alice`.
   - POST `/cgi-bin/hello.py` com body → 200, body ecoa stdin.
@@ -167,7 +167,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
   - Script sem permissão de execução → 502.
   Reaproveitar `lib.sh` e `assert_status`/`assert_body`/`assert_header`.
 
-- [ ] **16. Hook em `run_all.sh` + validação completa**
+- [x] **16. Hook em `run_all.sh` + validação completa** — `6c5623d` (glob automatico; 77/77 OK)
   Adicionar `tests/test_cgi.sh` à lista do `tests/run_all.sh`.
   Build limpo via WSL: `make re && tests/_run_with_server.sh tests/test_cgi.sh`.
   Rodar suite inteira (`run_all.sh`) e confirmar 0 regressões.
