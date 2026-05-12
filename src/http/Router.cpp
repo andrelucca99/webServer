@@ -11,7 +11,9 @@
 /* ************************************************************************** */
 
 #include "../includes/Router.hpp"
+#include "../includes/CgiHandler.hpp"
 #include "../includes/File.hpp"
+#include "../includes/HttpError.hpp"
 #include <sstream>
 #include <cstdlib>
 #include <cstdio>
@@ -37,21 +39,6 @@ static std::string sanitizeFilename(const std::string& filename) {
         clean = "upload.bin";
 
     return clean;
-}
-
-static std::string errorBody(int status, const ServerConfig& config) {
-    std::map<int, std::string>::const_iterator it = config.error_pages.find(status);
-    if (it != config.error_pages.end()) {
-        std::string ep = it->second;
-        std::string path = config.root;
-        if (!path.empty() && path[path.size() - 1] != '/') path += "/";
-        if (!ep.empty() && ep[0] == '/') ep.erase(0, 1);
-        std::string content = readFile(path + ep);
-        if (!content.empty()) return content;
-    }
-    std::ostringstream oss;
-    oss << "<h1>" << status << " " << HttpResponse::reasonPhraseFor(status) << "</h1>";
-    return oss.str();
 }
 
 static std::string generateAutoindex(const std::string& dirPath, const std::string& uriPath) {
@@ -131,14 +118,14 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
     if (route && !isMethodAllowed(*route, request.method)) {
         res.status = 405;
-        res.body = errorBody(405, config);
+        res.body = httpErrorBody(405, config);
         res.contentType = "text/html";
         return res;
     }
 
     if (config.client_max_body_size > 0 && request.body.size() > config.client_max_body_size) {
         res.status = 413;
-        res.body = errorBody(413, config);
+        res.body = httpErrorBody(413, config);
         res.contentType = "text/html";
         return res;
     }
@@ -148,7 +135,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
     if (path.find("..") != std::string::npos) {
         res.status = 403;
-        res.body = errorBody(403, config);
+        res.body = httpErrorBody(403, config);
         res.contentType = "text/html";
         return res;
     }
@@ -166,7 +153,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             res.body = "";
         } else {
             res.status = 404;
-            res.body = errorBody(404, config);
+            res.body = httpErrorBody(404, config);
         }
         res.contentType = "text/html";
         return res;
@@ -176,14 +163,14 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
         if (!request.isMultipart) {
             res.status = 400;
-            res.body = errorBody(400, config);
+            res.body = httpErrorBody(400, config);
             res.contentType = "text/html";
             return res;
         }
 
         if (request.boundary.empty()) {
             res.status = 400;
-            res.body = errorBody(400, config);
+            res.body = httpErrorBody(400, config);
             res.contentType = "text/html";
             return res;
         }
@@ -248,7 +235,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
             if (!writeFile(uploadPath, fileData)) {
                 res.status = 500;
-                res.body = errorBody(500, config);
+                res.body = httpErrorBody(500, config);
                 res.contentType = "text/html";
                 return res;
             }
@@ -259,7 +246,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
 
         if (!saved) {
             res.status = 400;
-            res.body = errorBody(400, config);
+            res.body = httpErrorBody(400, config);
             res.contentType = "text/html";
             return res;
         }
@@ -294,7 +281,7 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             }
 
             res.status = 403;
-            res.body = errorBody(403, config);
+            res.body = httpErrorBody(403, config);
             res.contentType = "text/html";
             return res;
         }
@@ -308,14 +295,14 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             res.contentType = HttpResponse::mimeTypeFor(ext);
         } else {
             res.status = 404;
-            res.body = errorBody(404, config);
+            res.body = httpErrorBody(404, config);
             res.contentType = "text/html";
         }
         return res;
     }
 
     res.status = 405;
-    res.body = errorBody(405, config);
+    res.body = httpErrorBody(405, config);
     res.contentType = "text/html";
     return res;
 }

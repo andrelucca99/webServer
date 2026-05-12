@@ -24,6 +24,7 @@ SRCS        = \
 	$(HTTP_DIR)/HttpResponse.cpp \
 	$(HTTP_DIR)/HttpRequest.cpp \
 	$(HTTP_DIR)/CgiHandler.cpp \
+	$(HTTP_DIR)/HttpError.cpp \
 	$(UTILS_DIR)/File.cpp \
 
 OBJS        = $(SRCS:.cpp=.o)

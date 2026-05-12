@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../includes/CgiHandler.hpp"
+#include "../includes/HttpError.hpp"
 #include <cctype>
 #include <cstring>
 #include <map>
@@ -211,11 +212,9 @@ bool CgiHandler::_parseOutput(const std::string& raw, HttpResponse& res) const {
 
 HttpResponse CgiHandler::_errorResponse(int status) const {
     HttpResponse res;
-    res.status = status;
+    res.status      = status;
     res.contentType = "text/html";
-    std::ostringstream oss;
-    oss << "<h1>" << status << " " << HttpResponse::reasonPhraseFor(status) << "</h1>";
-    res.body = oss.str();
+    res.body        = httpErrorBody(status, _server);
     return res;
 }
 
