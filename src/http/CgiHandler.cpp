@@ -130,6 +130,85 @@ std::map<std::string, std::string> CgiHandler::_buildEnv() const {
     return env;
 }
 
+static std::string toLowerStr(const std::string& s) {
+    std::string out;
+    out.reserve(s.size());
+    for (size_t i = 0; i < s.size(); ++i)
+        out += static_cast<char>(std::tolower(static_cast<unsigned char>(s[i])));
+    return out;
+}
+
+static std::string trimWs(const std::string& s) {
+    size_t b = 0;
+    while (b < s.size() && (s[b] == ' ' || s[b] == '\t'))
+        ++b;
+    size_t e = s.size();
+    while (e > b && (s[e - 1] == ' ' || s[e - 1] == '\t' ||
+                     s[e - 1] == '\r' || s[e - 1] == '\n'))
+        --e;
+    return s.substr(b, e - b);
+}
+
+bool CgiHandler::_parseOutput(const std::string& raw, HttpResponse& res) const {
+    size_t sep_len = 0;
+    size_t sep = raw.find("\r\n\r\n");
+    if (sep != std::string::npos) {
+        sep_len = 4;
+    } else {
+        sep = raw.find("\n\n");
+        if (sep != std::string::npos)
+            sep_len = 2;
+    }
+    if (sep == std::string::npos)
+        return false;
+
+    std::string headers_blob = raw.substr(0, sep);
+    std::string body         = raw.substr(sep + sep_len);
+
+    res.status      = 200;
+    res.contentType = "text/html";
+    res.location    = "";
+
+    size_t pos = 0;
+    while (pos < headers_blob.size()) {
+        size_t eol = headers_blob.find('\n', pos);
+        std::string line = (eol == std::string::npos)
+                              ? headers_blob.substr(pos)
+                              : headers_blob.substr(pos, eol - pos);
+        if (!line.empty() && line[line.size() - 1] == '\r')
+            line.erase(line.size() - 1, 1);
+
+        if (!line.empty()) {
+            size_t colon = line.find(':');
+            if (colon == std::string::npos)
+                return false;
+            std::string name  = toLowerStr(trimWs(line.substr(0, colon)));
+            std::string value = trimWs(line.substr(colon + 1));
+
+            if (name == "status") {
+                std::istringstream iss(value);
+                int code = 0;
+                iss >> code;
+                if (code > 0)
+                    res.status = code;
+            } else if (name == "content-type") {
+                res.contentType = value;
+            } else if (name == "location") {
+                res.location = value;
+                if (res.status == 200)
+                    res.status = 302;
+            }
+        }
+
+        if (eol == std::string::npos)
+            break;
+        pos = eol + 1;
+    }
+
+    res.body = body;
+    return true;
+}
+
 HttpResponse CgiHandler::_errorResponse(int status) const {
     HttpResponse res;
     res.status = status;
@@ -241,8 +320,7 @@ HttpResponse CgiHandler::execute() {
         return _errorResponse(502);
 
     HttpResponse res;
-    res.status = 200;
-    res.contentType = "text/html";
-    res.body = output;
+    if (!_parseOutput(output, res))
+        return _errorResponse(502);
     return res;
 }
