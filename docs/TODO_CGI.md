@@ -172,7 +172,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
   Build limpo via WSL: `make re && tests/_run_with_server.sh tests/test_cgi.sh`.
   Rodar suite inteira (`run_all.sh`) e confirmar 0 regressões.
 
-- [ ] **17. Atualizar `docs/TODO.md`**
+- [x] **17. Atualizar `docs/TODO.md`** — pendente próximo commit
   - Tabela "Visão geral": linha CGI de `❌` → `✅` com hashes dos commits.
   - Remover bloco CGI da seção "Falta — Jefferson".
   - Adicionar entrada em "Já entregue — Jefferson".

@@ -32,7 +32,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 | Limpeza (remoção de classe `Socket` morta + unify `HttpResponse`) | ✅ | Jefferson — `69ab058`, `d59fd85` |
 | Build separado de testes (`Makefile.test`, `test_parser`) | ✅ | Jefferson — `bb83dcd`, `31dd67a`, `b3656d3` |
 | README.md (cap. V do subject) | ✅ | Jefferson — `7e81e2a` |
-| CGI (`fork` + `execve` + `pipe`) | ❌ | Jefferson (divisão original) |
+| CGI (`fork` + `execve` + `pipe`) | ✅ | Jefferson — `1ff092c`, `e3e29c2`, `125247f`, `9b7c278`, `fe382a2`, `0d8549d`, `95f3e1d`, `eab0c3e`, `b9eda32`, `b6b4204`, `88fffc3`, `3bfef97`, `2f57735`, `6c5623d` |
 | `root` por location | ✅ | Jefferson — `fcbfc48`, `f83d1d9`, `beb7d41`, `78db994` |
 | Diretiva `upload_store` (path configurável de upload por rota) | ✅ | Jefferson — `a75b607`, `8b05ff4`, `51ec167`, `6543326` |
 | Timeout de conexão no `poll()` | ❌ | — |
@@ -69,18 +69,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 
 ### ❌ Falta
 
-- [ ] **CGI** — requisito obrigatório do subject (era seu na divisão original do PDF).
-  Implementar:
-  - Diretiva `cgi_extension .py /usr/bin/python3` no bloco `location`.
-  - Campo `std::map<std::string,std::string> cgi_extensions` em `RouteConfig`.
-  - Classe `CgiHandler`: detecta extensão no path, monta envvars (`REQUEST_METHOD`, `PATH_INFO`, `QUERY_STRING`, `CONTENT_LENGTH`, `CONTENT_TYPE`, `SERVER_NAME`, `SERVER_PORT`, `SCRIPT_FILENAME`, `REDIRECT_STATUS`).
-  - Execução via `fork` + `execve` + `pipe` para stdin/stdout. `chdir` para o diretório do script antes do `execve`.
-  - Parse da saída do CGI (headers + body) → `HttpResponse`.
-  - Integração com event loop do `Server` (síncrono com timeout, ou assíncrono).
-
-- [ ] **Testes de integração — CGI**
-  Pendente até CGI estar implementado. Cobrir execução de script, env vars,
-  parsing da saída, timeout. Adicionar como `tests/test_cgi.sh`.
+_(Nada pendente do escopo de Jefferson.)_
 
 ### ✅ Já entregue
 
@@ -96,6 +85,8 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 - Suite de integração modular em `tests/` (GET, POST, DELETE, redirect, errors, autoindex, security, concurrent) — `2d264be`, `f00e5ea`, `037f0f2`, `c6e1a3c`, `84dbf21`, `658694f`, `0388967`, `55e46a1`.
 - Diretiva `upload_store` por rota (struct + parser + Router + asserts em `tests/test_post.sh`) — `a75b607`, `8b05ff4`, `51ec167`, `6543326`.
 - Diretiva `root` por `location` (struct + parser + Router com fallback para `config.root` + asserts em `tests/test_get.sh`) — `fcbfc48`, `f83d1d9`, `beb7d41`, `78db994`.
+- **CGI** (`fork` + `execve` + `pipe` + `poll`): diretiva `cgi_extension`, `CgiHandler` com env CGI/1.1 (`REQUEST_METHOD`, `PATH_INFO`, `QUERY_STRING`, `CONTENT_LENGTH`, `CONTENT_TYPE`, `SCRIPT_FILENAME`, `SCRIPT_NAME`, `REDIRECT_STATUS`, `GATEWAY_INTERFACE`, `SERVER_PROTOCOL`, `HTTP_*`), pipes stdin/stdout, `chdir` + basename pós-chdir, parent I/O via `poll()` com timeout 5s e `SIGKILL` em estouro, parser de output (Status/Content-Type/Location/headers extras), dispatch no `Router`, falhas mapeadas para 500/502/504 via `httpErrorBody` — `1ff092c`, `e3e29c2`, `125247f`, `9b7c278`, `fe382a2`, `0d8549d`, `95f3e1d`, `eab0c3e`, `b9eda32`, `b6b4204`, `88fffc3`, `3bfef97`, `2f57735`.
+- Testes de integração — CGI (`tests/test_cgi.sh` com 12 asserts + fixtures `hello.py`, `redirect.py`, `slow.py`) — `6c5623d`.
 - Limpeza de código morto (classe `Socket`, `HttpResponse` legado) — `69ab058`, `d59fd85`.
 
 ---
@@ -115,4 +106,4 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta · ⚠️ a verificar
 - A divisão original (`webserv_divisao_projeto.pdf`) colocava:
   - **Pessoa A (infra/sockets/poll):** seria André em ideia, mas na prática quem fechou `poll()` com múltiplos servers, autoindex, error_pages, redirect, integração ConfigParser↔Router e cleanups foi **Jefferson**.
   - **Pessoa B (parser HTTP, response, GET/POST/DELETE/upload/CGI):** era Jefferson, mas **André** acabou implementando GET, POST, multipart/upload, validações HTTP no parser e parte da segurança do Router.
-- Resultado: a dupla cruzou responsabilidades, mas **CGI** continua com o Jefferson conforme a divisão original do PDF — é o maior gap obrigatório e ninguém começou ainda.
+- Resultado: a dupla cruzou responsabilidades, e **CGI** foi entregue pelo Jefferson conforme a divisão original do PDF.
