@@ -144,7 +144,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
 
 ## Fase 6 — Fixtures, testes e docs
 
-- [ ] **14. Fixture: `www/cgi-bin/hello.py`**
+- [x] **14. Fixture: `www/cgi-bin/hello.py`** — `88fffc3`
   Script Python que:
   - Imprime `Content-Type: text/html\n\n` seguido de body HTML.
   - Inclui `os.environ.get('QUERY_STRING')` no body para conferir env.
