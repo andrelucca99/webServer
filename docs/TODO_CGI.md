@@ -106,7 +106,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
 
 ## Fase 4 — Resposta CGI
 
-- [ ] **11. Parser da saída CGI → `HttpResponse`**
+- [x] **11. Parser da saída CGI → `HttpResponse`** — `eab0c3e`
   - Localizar primeira linha em branco (`\r\n\r\n` ou `\n\n`) → split headers/body.
   - Para cada header:
     - `Status: 302 Found` → setar `res.status = 302` e `reasonPhrase`.
