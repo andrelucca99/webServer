@@ -147,6 +147,14 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
     if (!path.empty())
         fullPath += path;
 
+    if (route) {
+        std::string interpreter = CgiHandler::matchCgi(*route, request.path);
+        if (!interpreter.empty()) {
+            CgiHandler cgi(request, *route, config, fullPath, interpreter);
+            return cgi.execute();
+        }
+    }
+
     if (request.method == "DELETE") {
         if (std::remove(fullPath.c_str()) == 0) {
             res.status = 204;
