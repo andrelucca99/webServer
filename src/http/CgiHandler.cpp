@@ -253,14 +253,22 @@ HttpResponse CgiHandler::execute() {
         close(in_pipe[0]);  close(in_pipe[1]);
         close(out_pipe[0]); close(out_pipe[1]);
 
-        std::string dir = _scriptPath;
-        size_t slash = dir.find_last_of('/');
-        if (slash != std::string::npos)
-            dir = dir.substr(0, slash);
-        else
-            dir = ".";
+        std::string dir;
+        std::string base;
+        size_t slash = _scriptPath.find_last_of('/');
+        if (slash != std::string::npos) {
+            dir  = _scriptPath.substr(0, slash);
+            base = _scriptPath.substr(slash + 1);
+        } else {
+            dir  = ".";
+            base = _scriptPath;
+        }
         if (chdir(dir.c_str()) != 0)
             _exit(1);
+
+        // depois do chdir, argv[1] precisa ser relativo ao novo cwd (basename)
+        delete[] argv[1];
+        argv[1] = dupStr(base);
 
         execve(_interpreter.c_str(), argv, envp);
         _exit(1);
