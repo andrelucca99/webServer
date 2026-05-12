@@ -1,0 +1,3 @@
+# Scripts shell e CGI devem ficar LF em qualquer plataforma para rodar via WSL.
+*.sh text eol=lf
+*.py text eol=lf
