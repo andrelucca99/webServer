@@ -120,7 +120,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
 
 ## Fase 5 — Integração no Router e tratamento de erros
 
-- [ ] **12. Dispatch CGI no `Router::handleRequest`**
+- [x] **12. Dispatch CGI no `Router::handleRequest`** — `b6b4204`
   Em [`src/http/Router.cpp:115`](../src/http/Router.cpp#L115), **antes** do
   branch de DELETE/POST/GET (mas depois de método permitido,
   `client_max_body_size` e proteção `..`):
@@ -133,7 +133,7 @@ Legenda: ✅ feito · ⏳ em andamento · ❌ falta
   ```
   Atenção: `fullPath` deve respeitar `route->root` (já implementado).
 
-- [ ] **13. Mapear falhas CGI para HTTP**
+- [x] **13. Mapear falhas CGI para HTTP** — `b9eda32`
   - `fork`/`pipe` falham → 500.
   - Filho sai com status ≠ 0 (exec falhou) → 502.
   - Timeout do `poll`/`waitpid` → 504.
