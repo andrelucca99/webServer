@@ -198,6 +198,9 @@ bool CgiHandler::_parseOutput(const std::string& raw, HttpResponse& res) const {
                 res.location = value;
                 if (res.status == 200)
                     res.status = 302;
+            } else if (name != "content-length" && name != "connection") {
+                // preserva o nome original (case do CGI) para o cliente
+                res.headers[trimWs(line.substr(0, colon))] = value;
             }
         }
 

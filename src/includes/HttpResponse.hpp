@@ -11,14 +11,16 @@
 /* ************************************************************************** */
 
 #pragma once
+#include <map>
 #include <string>
 
 class HttpResponse {
 	public:
-		int         status;
-		std::string body;
-		std::string contentType;
-		std::string location;
+		int                                status;
+		std::string                        body;
+		std::string                        contentType;
+		std::string                        location;
+		std::map<std::string, std::string> headers;
 
 		HttpResponse();
 		HttpResponse(const HttpResponse& other);

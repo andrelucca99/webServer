@@ -20,7 +20,8 @@ HttpResponse::HttpResponse(const HttpResponse& other)
 	: status(other.status),
 	  body(other.body),
 	  contentType(other.contentType),
-	  location(other.location) {}
+	  location(other.location),
+	  headers(other.headers) {}
 
 HttpResponse& HttpResponse::operator=(const HttpResponse& other) {
 	if (this != &other) {
@@ -28,6 +29,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse& other) {
 		body        = other.body;
 		contentType = other.contentType;
 		location    = other.location;
+		headers     = other.headers;
 	}
 	return *this;
 }
@@ -42,6 +44,10 @@ std::string HttpResponse::build() const {
 		oss << "Location: " << location << "\r\n";
 	oss << "Content-Type: " << contentType << "\r\n";
 	oss << "Content-Length: " << body.size() << "\r\n";
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin();
+		 it != headers.end(); ++it) {
+		oss << it->first << ": " << it->second << "\r\n";
+	}
 	oss << "Connection: close\r\n";
 	oss << "\r\n";
 	oss << body;
