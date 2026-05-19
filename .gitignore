@@ -1,5 +1,6 @@
 *.pdf
 # *.md
+CLAUDE.md
 .claude
 !README.md
 !*_roadmap.md
