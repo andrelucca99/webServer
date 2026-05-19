@@ -16,6 +16,7 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -281,36 +282,82 @@ HttpResponse CgiHandler::execute() {
     close(in_pipe[0]);
     close(out_pipe[1]);
 
-    if (!_request.body.empty()) {
-        const char* p = _request.body.data();
-        size_t left = _request.body.size();
-        while (left > 0) {
-            ssize_t n = write(in_pipe[1], p, left);
-            if (n <= 0) break;
-            p += n;
-            left -= static_cast<size_t>(n);
-        }
+    // Subject: nunca chamar read/write sem passar por poll(). Marcamos
+    // ambos os fds como nao-bloqueantes e fazemos write/read sempre apos
+    // poll() acordar com POLLOUT/POLLIN.
+    fcntl(in_pipe[1],  F_SETFL, O_NONBLOCK);
+    fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
+
+    const char* body_ptr  = _request.body.data();
+    size_t      body_left = _request.body.size();
+    bool        in_open   = true;  // stdin do filho ainda aberto
+    if (body_left == 0) {
+        close(in_pipe[1]);
+        in_open = false;
     }
-    close(in_pipe[1]);
 
     std::string output;
     bool timed_out = false;
-    struct pollfd pfd;
-    pfd.fd = out_pipe[0];
-    pfd.events = POLLIN;
+    struct pollfd pfds[2];
+
     while (true) {
-        int pr = poll(&pfd, 1, CGI_TIMEOUT_MS);
+        nfds_t nf = 0;
+        int idx_out = -1;
+        int idx_in  = -1;
+
+        pfds[nf].fd      = out_pipe[0];
+        pfds[nf].events  = POLLIN;
+        pfds[nf].revents = 0;
+        idx_out = nf;
+        nf++;
+
+        if (in_open) {
+            pfds[nf].fd      = in_pipe[1];
+            pfds[nf].events  = POLLOUT;
+            pfds[nf].revents = 0;
+            idx_in = nf;
+            nf++;
+        }
+
+        int pr = poll(pfds, nf, CGI_TIMEOUT_MS);
         if (pr < 0) break;
         if (pr == 0) { timed_out = true; break; }
-        if (pfd.revents & (POLLIN | POLLHUP)) {
+
+        // Escreve body no stdin do filho quando POLLOUT disponivel.
+        if (in_open && idx_in >= 0 && (pfds[idx_in].revents & POLLOUT)) {
+            ssize_t n = write(in_pipe[1], body_ptr, body_left);
+            if (n <= 0) {
+                close(in_pipe[1]);
+                in_open = false;
+            } else {
+                body_ptr  += n;
+                body_left -= static_cast<size_t>(n);
+                if (body_left == 0) {
+                    close(in_pipe[1]);
+                    in_open = false;
+                }
+            }
+        }
+
+        // Le stdout do filho quando POLLIN disponivel.
+        bool out_hup = false;
+        if (pfds[idx_out].revents & POLLIN) {
             char buf[CGI_READ_BUF];
             ssize_t n = read(out_pipe[0], buf, sizeof(buf));
-            if (n <= 0) break;
-            output.append(buf, static_cast<size_t>(n));
-        } else {
-            break;
+            if (n <= 0) {
+                out_hup = true;
+            } else {
+                output.append(buf, static_cast<size_t>(n));
+            }
+        } else if (pfds[idx_out].revents & POLLHUP) {
+            out_hup = true;
         }
+
+        if (out_hup)
+            break;
     }
+    if (in_open)
+        close(in_pipe[1]);
     close(out_pipe[0]);
 
     if (timed_out)
