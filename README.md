@@ -100,11 +100,11 @@ concurrent connections and CGI.
 - `man 2 poll`, `man 2 socket`, `man 2 fcntl`, `man 2 fork`, `man 2 execve`
 
 **AI usage:**
-Claude (claude.ai/code) was used to assist with: (a) integration between the
-config parser and the HTTP router, (b) the `poll()`-based multi-server event
-loop with idle-connection timeout, (c) the CGI handler (`fork`/`execve`/pipes
-with non-blocking I/O on both ends of the pipe, output parsing) and (d) the
-autoindex directory listing. All generated code was reviewed, tested with the
-integration suite in `tests/`, and understood by both authors before being
-committed; CGI conformance was verified against the subject (no `errno` after
-I/O, every `read`/`write` gated by `poll`, `fork` used only for CGI).
+AI assistance was used on key points: the `poll()`-based event loop design
+(non-blocking I/O, simultaneous read/write monitoring, idle-connection
+timeout) and the CGI handler (`fork`/`execve`/pipes with non-blocking I/O on
+both pipe ends and CGI output parsing). All generated code was reviewed,
+tested via the integration suite in `tests/`, and understood by both authors
+before being committed; subject conformance was audited line by line (no
+`errno` after I/O, every `read`/`write` gated by `poll`, `fork` used only
+for CGI).
