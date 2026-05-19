@@ -3,7 +3,7 @@
 CLAUDE.md
 .claude
 !README.md
-!*_roadmap.md
+docs/
 
 # build artefacts
 *.o
