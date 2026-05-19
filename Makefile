@@ -1,7 +1,7 @@
 # ==========================
 # CONFIG
 # ==========================
-NAME        = webserv_test
+NAME        = webserv
 
 CXX         = c++
 CXXFLAGS    = -Wall -Wextra -Werror -std=c++98

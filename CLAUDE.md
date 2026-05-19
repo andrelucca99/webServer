@@ -31,7 +31,7 @@ O Claude Code adiciona automaticamente `Co-authored-by: Claude <...>` nos commit
 ## Build Commands
 
 ```bash
-make        # Build → produces webserv_test executable
+make        # Build → produces webserv executable
 make re     # Clean rebuild
 make clean  # Remove object files only
 make fclean # Remove object files and executable
@@ -39,9 +39,10 @@ make fclean # Remove object files and executable
 
 Compiler: `c++` with `-Wall -Wextra -Werror -std=c++98`. No external dependencies.
 
-Run the test binary:
+Run the binary:
 ```bash
-./webserv_test
+./webserv               # usa config.conf por padrao
+./webserv config.conf   # config explicita
 ```
 
 ## Architecture

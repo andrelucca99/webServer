@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Helpers compartilhados pelas suites de teste de integracao.
-# Pre-requisito: webserv_test ja esta rodando em 127.0.0.1:8080 e 127.0.0.1:8081
+# Pre-requisito: webserv ja esta rodando em 127.0.0.1:8080 e 127.0.0.1:8081
 # com a config padrao (config.conf).
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
@@ -88,7 +88,7 @@ assert_body() {
 ensure_server_up() {
     local url="$1"
     if ! curl -s --max-time 2 -o /dev/null "$url"; then
-        echo -e "${RED}!! Servidor nao responde em $url. Suba o webserv_test antes de rodar.${NC}"
+        echo -e "${RED}!! Servidor nao responde em $url. Suba o webserv antes de rodar.${NC}"
         exit 2
     fi
 }

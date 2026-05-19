@@ -6,6 +6,7 @@
 
 # build artefacts
 *.o
+webserv
 webserv_test
 
 # fixtures geradas por testes (caso o cleanup falhe)

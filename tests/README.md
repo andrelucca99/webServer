@@ -1,12 +1,12 @@
 # Testes de integracao
 
-Suites em bash que batem em um `webserv_test` ja rodando.
+Suites em bash que batem em um `webserv` ja rodando.
 
 ## Pre-requisitos
 
 ```bash
 make
-./webserv_test &     # sobe servidor com config.conf (portas 8080 e 8081)
+./webserv &     # sobe servidor com config.conf (portas 8080 e 8081)
 ```
 
 ## Rodar
