@@ -22,9 +22,8 @@ struct HttpRequest {
     std::string http_version;                        // HTTP/1.1 ou HTTP/1.0
     std::map<std::string, std::string> headers;      // Host, Content-Type, Content-Length, etc
     std::string body;                                // POST/PUT data (vazio em GET/DELETE)
-    bool valid;
     bool isMultipart;
     std::string boundary;
 
-    HttpRequest() {}
+    HttpRequest() : isMultipart(false) {}
 };
