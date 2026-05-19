@@ -82,7 +82,35 @@ CgiHandler::CgiHandler(const HttpRequest&  request,
       _route(route),
       _server(server),
       _scriptPath(scriptPath),
-      _interpreter(interpreter) {}
+      _interpreter(interpreter),
+      _scriptName(request.path) {
+    // Calcula o split script/path_info conforme RFC 3875. Para
+    // /cgi-bin/foo.py/extra: SCRIPT_NAME=/cgi-bin/foo.py, PATH_INFO=/extra.
+    // Tambem corta _scriptPath para apontar so para o script (sem path_info)
+    // para que o execve nao receba um path inexistente.
+    typedef std::map<std::string, std::string>::const_iterator It;
+    for (It it = route.cgi_extensions.begin(); it != route.cgi_extensions.end(); ++it) {
+        const std::string& ext = it->first;
+        if (ext.empty() || ext.size() > request.path.size())
+            continue;
+        size_t pos = request.path.rfind(ext);
+        if (pos == std::string::npos)
+            continue;
+        size_t after = pos + ext.size();
+        if (after == request.path.size()) {
+            _scriptName = request.path;
+            _pathInfo.clear();
+            break;
+        }
+        if (request.path[after] == '/') {
+            _scriptName = request.path.substr(0, after);
+            _pathInfo   = request.path.substr(after);
+            if (_pathInfo.size() < _scriptPath.size())
+                _scriptPath = _scriptPath.substr(0, _scriptPath.size() - _pathInfo.size());
+            break;
+        }
+    }
+}
 
 CgiHandler::~CgiHandler() {}
 
@@ -110,10 +138,11 @@ std::map<std::string, std::string> CgiHandler::_buildEnv() const {
                                                              : _request.http_version;
     env["SERVER_NAME"]       = _server.host;
     env["SERVER_PORT"]       = itos(_server.port);
+    env["REMOTE_ADDR"]       = _server.host.empty() ? "127.0.0.1" : _server.host;
     env["REQUEST_METHOD"]    = _request.method;
-    env["SCRIPT_NAME"]       = _request.path;
+    env["SCRIPT_NAME"]       = _scriptName;
     env["SCRIPT_FILENAME"]   = _scriptPath;
-    env["PATH_INFO"]         = _request.path;
+    env["PATH_INFO"]         = _pathInfo;
     env["QUERY_STRING"]      = _request.query_string;
     env["REDIRECT_STATUS"]   = "200";
 
@@ -223,7 +252,8 @@ HttpResponse CgiHandler::_errorResponse(int status) const {
 }
 
 HttpResponse CgiHandler::execute() {
-    signal(SIGPIPE, SIG_IGN);
+    // SIGPIPE ja eh ignorado globalmente em Server::run() (subject: nunca
+    // crashar quando o cliente/filho fecha o pipe).
 
     std::map<std::string, std::string> env = _buildEnv();
     char** envp = mapToEnvp(env);

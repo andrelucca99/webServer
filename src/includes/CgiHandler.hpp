@@ -40,8 +40,10 @@ class CgiHandler {
         const HttpRequest&  _request;
         const RouteConfig&  _route;
         const ServerConfig& _server;
-        std::string         _scriptPath;
+        std::string         _scriptPath;   // path em disco ate a extensao
         std::string         _interpreter;
+        std::string         _scriptName;   // request.path ate a extensao
+        std::string         _pathInfo;     // request.path apos a extensao
 
         std::map<std::string, std::string> _buildEnv() const;
         HttpResponse                       _errorResponse(int status) const;
