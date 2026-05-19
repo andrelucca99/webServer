@@ -21,6 +21,7 @@
 #include <map>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 static std::string sanitizeFilename(const std::string& filename) {
     std::string clean;
@@ -156,12 +157,22 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
     }
 
     if (request.method == "DELETE") {
-        if (std::remove(fullPath.c_str()) == 0) {
-            res.status = 204;
-            res.body = "";
-        } else {
+        struct stat st;
+        if (stat(fullPath.c_str(), &st) != 0) {
             res.status = 404;
-            res.body = httpErrorBody(404, config);
+            res.body   = httpErrorBody(404, config);
+        } else if (S_ISDIR(st.st_mode)) {
+            res.status = 403;
+            res.body   = httpErrorBody(403, config);
+        } else if (access(fullPath.c_str(), W_OK) != 0) {
+            res.status = 403;
+            res.body   = httpErrorBody(403, config);
+        } else if (std::remove(fullPath.c_str()) == 0) {
+            res.status = 204;
+            res.body   = "";
+        } else {
+            res.status = 403;
+            res.body   = httpErrorBody(403, config);
         }
         res.contentType = "text/html";
         return res;
