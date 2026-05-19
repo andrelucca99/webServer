@@ -115,14 +115,12 @@ static bool isRequestComplete(const std::string& buf) {
     return buf.size() >= headerEnd + 4 + contentLength;
 }
 
-static bool isServerFd(const std::vector<int>& serverFds, int fd, size_t& idx) {
-    for (size_t j = 0; j < serverFds.size(); j++) {
-        if (serverFds[j] == fd) {
-            idx = j;
-            return true;
-        }
-    }
-    return false;
+static bool isServerFd(const std::map<int, size_t>& serverFds, int fd, size_t& idx) {
+    std::map<int, size_t>::const_iterator it = serverFds.find(fd);
+    if (it == serverFds.end())
+        return false;
+    idx = it->second;
+    return true;
 }
 
 static void removeFd(std::vector<pollfd>& fds, std::map<int, ClientState>& clients, size_t i) {
@@ -160,7 +158,9 @@ void Server::run() {
     // pelo retorno da chamada (sem inspecionar errno).
     signal(SIGPIPE, SIG_IGN);
 
-    std::vector<int>           serverFds;
+    // serverFds: fd -> indice em _config.servers (preserva o indice original
+    // mesmo que algum bind falhe; bug latente R4 da auditoria).
+    std::map<int, size_t>      serverFds;
     std::vector<pollfd>        fds;
     std::map<int, ClientState> clients;
 
@@ -174,7 +174,7 @@ void Server::run() {
         int port = _config.servers[i].port != 0 ? _config.servers[i].port : 8080;
         std::cout << "Servidor " << i << " rodando na porta " << port << std::endl;
 
-        serverFds.push_back(fd);
+        serverFds[fd] = i;
 
         pollfd pfd;
         pfd.fd      = fd;
