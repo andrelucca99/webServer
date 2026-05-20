@@ -14,7 +14,4 @@
 #include <string>
 #include "ServerConfig.hpp"
 
-// Retorna o body HTML para um status de erro. Se houver entry em
-// config.error_pages, tenta servir o arquivo. Caso o arquivo nao exista
-// ou nao haja error_page configurada, devolve um fallback inline.
 std::string httpErrorBody(int status, const ServerConfig& config);

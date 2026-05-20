@@ -84,10 +84,7 @@ CgiHandler::CgiHandler(const HttpRequest&  request,
       _scriptPath(scriptPath),
       _interpreter(interpreter),
       _scriptName(request.path) {
-    // Calcula o split script/path_info conforme RFC 3875. Para
-    // /cgi-bin/foo.py/extra: SCRIPT_NAME=/cgi-bin/foo.py, PATH_INFO=/extra.
-    // Tambem corta _scriptPath para apontar so para o script (sem path_info)
-    // para que o execve nao receba um path inexistente.
+
     typedef std::map<std::string, std::string>::const_iterator It;
     for (It it = route.cgi_extensions.begin(); it != route.cgi_extensions.end(); ++it) {
         const std::string& ext = it->first;
@@ -229,7 +226,7 @@ bool CgiHandler::_parseOutput(const std::string& raw, HttpResponse& res) const {
                 if (res.status == 200)
                     res.status = 302;
             } else if (name != "content-length" && name != "connection") {
-                // preserva o nome original (case do CGI) para o cliente
+
                 res.headers[trimWs(line.substr(0, colon))] = value;
             }
         }
@@ -252,8 +249,6 @@ HttpResponse CgiHandler::_errorResponse(int status) const {
 }
 
 HttpResponse CgiHandler::execute() {
-    // SIGPIPE ja eh ignorado globalmente em Server::run() (subject: nunca
-    // crashar quando o cliente/filho fecha o pipe).
 
     std::map<std::string, std::string> env = _buildEnv();
     char** envp = mapToEnvp(env);
@@ -281,7 +276,7 @@ HttpResponse CgiHandler::execute() {
     }
 
     if (pid == 0) {
-        // child
+
         dup2(in_pipe[0], STDIN_FILENO);
         dup2(out_pipe[1], STDOUT_FILENO);
         close(in_pipe[0]);  close(in_pipe[1]);
@@ -300,7 +295,6 @@ HttpResponse CgiHandler::execute() {
         if (chdir(dir.c_str()) != 0)
             _exit(1);
 
-        // depois do chdir, argv[1] precisa ser relativo ao novo cwd (basename)
         delete[] argv[1];
         argv[1] = dupStr(base);
 
@@ -308,19 +302,15 @@ HttpResponse CgiHandler::execute() {
         _exit(1);
     }
 
-    // parent
     close(in_pipe[0]);
     close(out_pipe[1]);
 
-    // Subject: nunca chamar read/write sem passar por poll(). Marcamos
-    // ambos os fds como nao-bloqueantes e fazemos write/read sempre apos
-    // poll() acordar com POLLOUT/POLLIN.
     fcntl(in_pipe[1],  F_SETFL, O_NONBLOCK);
     fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
 
     const char* body_ptr  = _request.body.data();
     size_t      body_left = _request.body.size();
-    bool        in_open   = true;  // stdin do filho ainda aberto
+    bool        in_open   = true;  
     if (body_left == 0) {
         close(in_pipe[1]);
         in_open = false;
@@ -353,7 +343,6 @@ HttpResponse CgiHandler::execute() {
         if (pr < 0) break;
         if (pr == 0) { timed_out = true; break; }
 
-        // Escreve body no stdin do filho quando POLLOUT disponivel.
         if (in_open && idx_in >= 0 && (pfds[idx_in].revents & POLLOUT)) {
             ssize_t n = write(in_pipe[1], body_ptr, body_left);
             if (n <= 0) {
@@ -369,7 +358,6 @@ HttpResponse CgiHandler::execute() {
             }
         }
 
-        // Le stdout do filho quando POLLIN disponivel.
         bool out_hup = false;
         if (pfds[idx_out].revents & POLLIN) {
             char buf[CGI_READ_BUF];

@@ -42,6 +42,12 @@ struct ClientState {
     time_t      lastActivity;
 };
 
+static volatile sig_atomic_t g_stop = 0;
+
+static void onShutdownSignal(int ) {
+    g_stop = 1;
+}
+
 Server::Server(const Config& config) : _config(config) {}
 Server::~Server() {}
 
@@ -49,8 +55,6 @@ static void setNonBlocking(int fd) {
     fcntl(fd, F_SETFL, O_NONBLOCK);
 }
 
-// Parser simples de IPv4 ("A.B.C.D" -> uint32_t em network byte order).
-// Subject nao autoriza inet_addr; usamos parsing manual.
 static uint32_t parseIPv4(const std::string& host) {
     if (host.empty())
         return htonl(INADDR_ANY);
@@ -153,13 +157,12 @@ static void buildResponse(ClientState& st, const ServerConfig& server) {
 }
 
 void Server::run() {
-    // Subject: lidar adequadamente com desconexoes. SIGPIPE em write() para
-    // socket fechado mataria o processo; ignoramos para tratar via -1/EPIPE
-    // pelo retorno da chamada (sem inspecionar errno).
+
     signal(SIGPIPE, SIG_IGN);
 
-    // serverFds: fd -> indice em _config.servers (preserva o indice original
-    // mesmo que algum bind falhe; bug latente R4 da auditoria).
+    signal(SIGINT,  onShutdownSignal);
+    signal(SIGTERM, onShutdownSignal);
+
     std::map<int, size_t>      serverFds;
     std::vector<pollfd>        fds;
     std::map<int, ClientState> clients;
@@ -190,13 +193,11 @@ void Server::run() {
 
     char buffer[BUFFER_SIZE];
 
-    while (true) {
-        // Timeout finito para podermos varrer conexoes ociosas mesmo que
-        // nenhum fd dispare evento. Subject: "servidor nunca deve travar".
+    while (!g_stop) {
+
         int ready = poll(&fds[0], static_cast<nfds_t>(fds.size()), POLL_TIMEOUT_MS);
         if (ready < 0) {
-            // poll() pode retornar -1 com EINTR por sinal benigno; subject
-            // proibe usar errno aqui, entao apenas reintegramos no loop.
+
             continue;
         }
 
@@ -204,8 +205,6 @@ void Server::run() {
             short revents = fds[i].revents;
             fds[i].revents = 0;
 
-            // Erro/hangup em fd de cliente: limpa a conexao sem mais I/O.
-            // Server fd nao deveria receber POLLHUP/POLLERR; se receber, ignora.
             size_t serverIdx = 0;
             bool isServer = isServerFd(serverFds, fds[i].fd, serverIdx);
 
@@ -241,7 +240,6 @@ void Server::run() {
                 continue;
             }
 
-            // cliente
             ClientState& st = clients[fds[i].fd];
 
             if (revents & POLLIN) {
@@ -256,9 +254,7 @@ void Server::run() {
 
                 if (!st.responseReady && isRequestComplete(st.readBuf)) {
                     buildResponse(st, _config.servers[st.serverIdx]);
-                    // Resposta pronta: monitora R|W simultaneamente
-                    // (subject: "poll() deve monitorar leitura e escrita
-                    // simultaneamente"). POLLIN aqui detecta FIN do cliente.
+
                     fds[i].events = POLLIN | POLLOUT;
                 }
             }
@@ -276,7 +272,6 @@ void Server::run() {
                 }
             }
 
-            // POLLHUP apos send pode indicar peer fechou; limpamos.
             if (revents & POLLHUP) {
                 removeFd(fds, clients, i);
                 i--;
@@ -284,9 +279,6 @@ void Server::run() {
             }
         }
 
-        // Varredura de connections ociosas (subject: "nunca travar
-        // indefinidamente"). Cliente que conectou e nao envia request
-        // completa em CLIENT_TIMEOUT_S segundos eh derrubado.
         time_t now = std::time(NULL);
         for (size_t i = 0; i < fds.size(); i++) {
             size_t dummy;

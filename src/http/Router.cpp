@@ -35,7 +35,6 @@ static std::string sanitizeFilename(const std::string& filename) {
         clean += c;
     }
 
-    // evita nomes vazios
     if (clean.empty())
         clean = "upload.bin";
 
@@ -194,7 +193,6 @@ HttpResponse Router::handleRequest(const HttpRequest& request, const ServerConfi
             return res;
         }
 
-        // MULTIPART (UPLOAD)
         const std::string& body = request.body;
         const std::string& boundary = request.boundary;
 

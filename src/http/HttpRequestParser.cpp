@@ -85,21 +85,17 @@ ParseStatus HttpRequestParser::parseHeaders(const std::string& raw, HttpRequest&
         std::string key = line.substr(0, colon);
         std::string value = line.substr(colon + 1);
 
-        // trim espaço início
         while (!value.empty() && value[0] == ' ')
             value.erase(0, 1);
 
-        // remove \r
         if (!value.empty() && value[value.size() - 1] == '\r')
             value.erase(value.size() - 1);
 
-        // formata para tolower
         for (size_t i = 0; i < key.size(); i++)
             key[i] = static_cast<char>(std::tolower(key[i]));
 
         req.headers[key] = value;
 
-        // multipart detection
         if (key == "content-type") {
             if (value.find("multipart/form-data") != std::string::npos) {
 
@@ -176,11 +172,9 @@ ParseStatus HttpRequestParser::parse(const std::string& raw, HttpRequest& req) {
 
         std::string host = hostIt->second;
 
-        // trim início
         while (!host.empty() && std::isspace(host[0]))
             host.erase(0, 1);
 
-        // trim fim
         while (!host.empty() && std::isspace(host[host.size() - 1]))
             host.erase(host.size() - 1);
 

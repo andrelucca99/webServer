@@ -7,8 +7,13 @@ docs/
 
 # build artefacts
 *.o
+*.san.o
+*.vg.o
 webserv
 webserv_test
+webserv_san
+parser_smoke
+parser_smoke_vg
 
 # fixtures geradas por testes (caso o cleanup falhe)
 big.txt

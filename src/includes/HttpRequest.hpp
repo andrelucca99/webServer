@@ -15,13 +15,13 @@
 #include <map>
 
 struct HttpRequest {
-    std::string method;                              // GET, POST, DELETE, etc
-    std::string uri;                                 // /index.html ou /index.html?name=value
-    std::string path;                                // /index.html (sem query string)
-    std::string query_string;                        // name=value (sem ?)
-    std::string http_version;                        // HTTP/1.1 ou HTTP/1.0
-    std::map<std::string, std::string> headers;      // Host, Content-Type, Content-Length, etc
-    std::string body;                                // POST/PUT data (vazio em GET/DELETE)
+    std::string method;                              
+    std::string uri;                                 
+    std::string path;                                
+    std::string query_string;                        
+    std::string http_version;                        
+    std::map<std::string, std::string> headers;      
+    std::string body;                                
     bool isMultipart;
     std::string boundary;
 
