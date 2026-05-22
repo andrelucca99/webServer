@@ -1,9 +1,396 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Webserv Test</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Webserv Tester Dashboard</title>
+
+<style>
+    :root {
+        --bg-main: #0f172a;
+        --bg-card: #1e293b;
+        --bg-pre: #090d16;
+        --border-color: #334155;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        
+        /* Status Colors */
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+        background: var(--bg-main);
+        color: var(--text-main);
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    header {
+        width: 100%;
+        max-width: 1200px;
+        margin-bottom: 40px;
+        text-align: left;
+    }
+
+    h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #60a5fa;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    h1 span {
+        font-size: 0.9rem;
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 24px;
+    }
+
+    .card {
+        background: var(--bg-card);
+        border-radius: 14px;
+        padding: 24px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-header h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #93c5fd;
+        margin-bottom: 12px;
+    }
+
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        flex-grow: 1;
+    }
+
+    /* Inputs e Controles */
+    input[type="text"] {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: #111827;
+        color: white;
+        outline: none;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+        border-color: var(--primary);
+    }
+
+    /* Custom File Input */
+    input[type="file"] {
+        width: 100%;
+        padding: 8px;
+        background: #111827;
+        border-radius: 8px;
+        border: 1px dashed var(--border-color);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    /* Botões */
+    button {
+        background: var(--primary);
+        border: none;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, opacity 0.2s;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+
+    button:hover {
+        background: var(--primary-hover);
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Bloco de Resposta */
+    .response-wrapper {
+        margin-top: 16px;
+    }
+
+    .response-header {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+
+    pre {
+        background: var(--bg-pre);
+        padding: 14px;
+        border-radius: 8px;
+        border-left: 4px solid var(--border-color);
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        max-height: 220px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: #e2e8f0;
+    }
+
+    /* Classes de Status Dinâmicas via JS */
+    pre.status-2xx { border-left-color: var(--success); }
+    pre.status-3xx { border-left-color: var(--warning); }
+    pre.status-4xx, pre.status-5xx { border-left-color: var(--error); }
+    pre.status-error { border-left-color: var(--error); color: #f87171; }
+
+</style>
 </head>
 <body>
-    <h1>Funcionando 🚀</h1>
+
+<header>
+    <h1>🚀 Webserv Test Dashboard <span>v2.0</span></h1>
+</header>
+
+<div class="container">
+
+    <!-- GET -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>GET Request</h2></div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Busca o index padrão do servidor.</p>
+        </div>
+        <button onclick="handleTest('getResult', () => fetch('/'))">Test GET /</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="getResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- POST Upload -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>POST Upload</h2></div>
+            <input type="file" id="uploadFile"/>
+        </div>
+        <button onclick="executeUpload()">Upload File</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="uploadResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- DELETE -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>DELETE File</h2></div>
+            <input type="text" id="deleteFile" placeholder="ex: arquivo.txt"/>
+        </div>
+        <button onclick="executeDelete()">Delete File</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="deleteResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- CGI GET -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>CGI GET</h2></div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Executa script CGI enviando query strings.</p>
+        </div>
+        <button onclick="handleTest('cgiGetResult', () => fetch('/cgi-bin/hello.py?name=andre'))">Run CGI GET</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="cgiGetResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- CGI POST -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>CGI POST</h2></div>
+            <input type="text" id="cgiBody" placeholder="Corpo da mensagem do CGI..."/>
+        </div>
+        <button onclick="executeCgiPost()">Run CGI POST</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="cgiPostResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- Redirect -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>Redirect</h2></div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Testa a regra de redirecionamento manual.</p>
+        </div>
+        <button onclick="handleTest('redirectResult', () => fetch('/old', { redirect: 'manual' }))">Test Redirect</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="redirectResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- Autoindex -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>Autoindex</h2></div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Lista o diretório caso não haja index.html.</p>
+        </div>
+        <button onclick="handleTest('autoindexResult', () => fetch('/autoindex_test/'))">Open Autoindex</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="autoindexResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+    <!-- 404 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="card-header"><h2>404 Error</h2></div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Força uma rota inexistente no servidor.</p>
+        </div>
+        <button onclick="handleTest('errorResult', () => fetch('/arquivo-que-nao-existe.html'))">Generate 404</button>
+        <div class="response-wrapper">
+            <div class="response-header">Resposta</div>
+            <pre id="errorResult">Aguardando disparo...</pre>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Função utilitária centralizada para formatar as saídas HTTP
+function formatResponse(response, body) {
+    const headers = [...response.headers.entries()]
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\n');
+
+    return `STATUS: ${response.status} ${response.statusText || ''}\n\nHEADERS:\n${headers || '(Nenhum header retornado)'}\n\nBODY:\n${body || '(Corpo vazio)'}`;
+}
+
+// Orquestrador central de requisições (Evita repetição de código e trata erros)
+async function handleTest(targetId, fetchCallback, buttonElement = null) {
+    const output = document.getElementById(targetId);
+    
+    // Encontra o botão disparador para aplicar estado de loading se não for passado explicitamente
+    const btn = buttonElement || output.closest('.card').querySelector('button');
+    const originalText = btn.textContent;
+    
+    // Inicia Loading
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    output.textContent = "Aguardando resposta do webserv...";
+    output.className = ""; // Limpa classes antigas
+
+    try {
+        const res = await fetchCallback();
+        const body = await res.text();
+        
+        // Aplica classe baseada na família do status HTTP (2xx, 3xx, 4xx, 5xx)
+        const statusFamily = `${Math.floor(res.status / 100)}xx`;
+        output.classList.add(`status-${statusFamily}`);
+        
+        output.textContent = formatResponse(res, body);
+    } catch (err) {
+        // Trata erro caso o servidor esteja offline (Falha de rede)
+        output.classList.add('status-error');
+        output.textContent = `❌ ERRO DE CONEXÃO:\nNão foi possível conectar ao servidor Webserv.\n\nDetalhes: ${err.message}`;
+    } finally {
+        // Restaura o botão
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+/* Funções específicas que precisam capturar elementos de Input da DOM */
+
+function executeUpload() {
+    const fileInput = document.getElementById('uploadFile');
+    if (!fileInput.files.length) {
+        alert('Por favor, selecione um arquivo primeiro.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    handleTest('uploadResult', () => fetch('/upload', {
+        method: 'POST',
+        body: formData
+    }));
+}
+
+function executeDelete() {
+    const filename = document.getElementById('deleteFile').value.trim();
+    if (!filename) {
+        alert('Digite o nome do arquivo a ser deletado.');
+        return;
+    }
+
+    handleTest('deleteResult', () => fetch('/' + filename, {
+        method: 'DELETE'
+    }));
+}
+
+function executeCgiPost() {
+    const message = document.getElementById('cgiBody').value;
+
+    handleTest('cgiPostResult', () => fetch('/cgi-bin/hello.py', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: message
+    }));
+}
+</script>
+
 </body>
 </html>
